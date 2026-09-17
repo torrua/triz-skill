@@ -1,0 +1,586 @@
+"""
+Comprehensive Automated Test Suite & Pressure Verification Harness for triz-universal skill.
+Validates skill standards compliance, reference integrity, anti-rationalization guardrails,
+and evaluates RED vs GREEN benchmark pressure scenarios across multiple domains.
+"""
+
+import hashlib
+import os
+import re
+import unittest
+from pathlib import Path
+
+# Paths
+ROOT_DIR = Path(__file__).resolve().parent.parent
+SKILL_DIR = ROOT_DIR / "triz-universal"
+SKILL_FILE = SKILL_DIR / "SKILL.md"
+REFS_DIR = SKILL_DIR / "references"
+CONFIG_SKILL_DIR = Path(r"C:\Users\User\.gemini\config\skills\triz-universal")
+
+
+def parse_frontmatter(content: str) -> tuple[dict, str]:
+    """Extract YAML frontmatter and body from markdown content."""
+    if not content.startswith("---"):
+        return {}, content
+    parts = content.split("---", 2)
+    if len(parts) < 3:
+        return {}, content
+    yaml_text = parts[1]
+    body = parts[2]
+    meta = {}
+    current_key = None
+    for line in yaml_text.strip().splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if ":" in line and not line.startswith("-"):
+            key, val = line.split(":", 1)
+            key = key.strip()
+            val = val.strip()
+            if val in (">-", ">", "|", ""):
+                meta[key] = ""
+                current_key = key
+            elif val.startswith("[") and val.endswith("]"):
+                items = [x.strip() for x in val[1:-1].split(",") if x.strip()]
+                meta[key] = items
+                current_key = None
+            else:
+                meta[key] = val.strip('"').strip("'")
+                current_key = key
+        elif line.startswith("-") and current_key:
+            item = line[1:].strip().strip('"').strip("'")
+            if not isinstance(meta.get(current_key), list):
+                meta[current_key] = []
+            meta[current_key].append(item)
+    return meta, body
+
+
+class TestSkillMetadataAndStandards(unittest.TestCase):
+    """Verifies skill development standards and naming rules."""
+
+    def test_skill_file_exists(self):
+        self.assertTrue(SKILL_FILE.is_file(), f"SKILL.md not found at {SKILL_FILE}")
+
+    def test_skill_name_matches_directory(self):
+        content = SKILL_FILE.read_text(encoding="utf-8")
+        meta, _ = parse_frontmatter(content)
+        skill_name = meta.get("name")
+        dir_name = SKILL_DIR.name
+        self.assertEqual(
+            skill_name,
+            dir_name,
+            f"name field '{skill_name}' must match directory name '{dir_name}' exactly",
+        )
+
+    def test_skill_description_cso_compliance(self):
+        content = SKILL_FILE.read_text(encoding="utf-8")
+        meta, _ = parse_frontmatter(content)
+        desc = meta.get("description", "")
+        if not desc:
+            # check raw frontmatter
+            match = re.search(r"description:\s*(?:>-\s*)?(.*?)(?:\n[a-z_]+:|\n---)", content, re.DOTALL)
+            desc = match.group(1).strip() if match else ""
+        self.assertTrue(
+            desc.startswith("Use when"),
+            f"description must start with 'Use when...', got: '{desc[:30]}...'",
+        )
+
+    def test_metadata_triggers_present(self):
+        content = SKILL_FILE.read_text(encoding="utf-8")
+        # Verify metadata triggers has at least 3 keywords
+        triggers_match = re.search(r"triggers:\s*\n((?:\s+-\s+.*\n)+)", content)
+        self.assertIsNotNone(triggers_match, "metadata.triggers list must be defined")
+        triggers = [t.strip("- \r\n") for t in triggers_match.group(1).strip().splitlines()]
+        self.assertGreaterEqual(
+            len(triggers),
+            3,
+            f"Expected at least 3 triggers in metadata.triggers, got {len(triggers)}",
+        )
+
+    def test_skill_line_count_efficiency(self):
+        lines = SKILL_FILE.read_text(encoding="utf-8").splitlines()
+        self.assertLess(
+            len(lines),
+            400,
+            f"SKILL.md must be under 400 lines for context efficiency, got {len(lines)}",
+        )
+
+
+class TestReferenceIntegrity(unittest.TestCase):
+    """Verifies all reference modules exist, are indexed, and resolve correctly."""
+
+    def test_references_readme_exists(self):
+        readme = REFS_DIR / "README.md"
+        self.assertTrue(readme.is_file(), "references/README.md sub-topic entry point must exist")
+
+    def test_all_links_in_skill_md_resolve(self):
+        content = SKILL_FILE.read_text(encoding="utf-8")
+        links = re.findall(r"\[.*?\]\((references/[^)]+)\)", content)
+        self.assertGreater(len(links), 0, "SKILL.md must contain reference links")
+        for link in links:
+            target = SKILL_DIR / link
+            self.assertTrue(
+                target.is_file(),
+                f"Link '{link}' in SKILL.md does not resolve to an existing file",
+            )
+
+    def test_reference_files_have_frontmatter(self):
+        ref_files = list(REFS_DIR.glob("*.md"))
+        self.assertGreaterEqual(len(ref_files), 9, "Expected at least 9 reference files")
+        for ref_file in ref_files:
+            content = ref_file.read_text(encoding="utf-8")
+            self.assertTrue(
+                content.startswith("---"),
+                f"Reference file {ref_file.name} must start with YAML frontmatter",
+            )
+            self.assertIn(
+                "description:",
+                content,
+                f"Reference file {ref_file.name} missing description in frontmatter",
+            )
+
+    def test_reference_file_line_counts(self):
+        for ref_file in REFS_DIR.glob("*.md"):
+            lines = ref_file.read_text(encoding="utf-8").splitlines()
+            self.assertLess(
+                len(lines),
+                500,
+                f"Reference file {ref_file.name} exceeds 500 lines: {len(lines)} lines",
+            )
+
+
+class TestAntiRationalizationGuardrails(unittest.TestCase):
+    """Verifies that the anti-compromise guardrails are strictly defined."""
+
+    def test_anti_rationalization_table_present(self):
+        content = SKILL_FILE.read_text(encoding="utf-8")
+        self.assertIn("Anti-Rationalization Guardrails", content)
+        self.assertIn("trade-offs are inevitable", content)
+        self.assertIn("FORBIDDEN", content)
+        self.assertIn("VIOLATION OF IFR", content)
+
+    def test_red_flags_list_present(self):
+        content = SKILL_FILE.read_text(encoding="utf-8")
+        self.assertIn("Red Flags", content)
+        self.assertIn("STOP and Restart", content)
+        # Check specific forbidden compromise patterns
+        self.assertIn("We can balance between", content)
+        self.assertIn("A reasonable compromise would be", content)
+
+
+class TestArizAiPipelineFormulation(unittest.TestCase):
+    """Verifies that the canonical 5-step ARIZ-AI pipeline is strictly structured."""
+
+    def test_all_five_steps_defined(self):
+        content = SKILL_FILE.read_text(encoding="utf-8")
+        self.assertIn("Step 1: Mini-Problem & Ideal Final Result", content)
+        self.assertIn("Step 2: Sharpen the Physical Contradiction", content)
+        self.assertIn("Step 3: Substance-Field Resource Audit", content)
+        self.assertIn("Step 4: Apply the 4 Separation Operators", content)
+        self.assertIn("Step 5: Verification & Secondary Harm Audit", content)
+
+    def test_canonical_physical_contradiction_syntax(self):
+        content = SKILL_FILE.read_text(encoding="utf-8")
+        self.assertIn("must have property", content)
+        self.assertIn("AND", content)
+
+    def test_all_four_separation_principles_defined(self):
+        content = SKILL_FILE.read_text(encoding="utf-8")
+        self.assertIn("Separation in Space", content)
+        self.assertIn("Separation in Time", content)
+        self.assertIn("Separation by Condition", content)
+        self.assertIn("Separation by Structure", content)
+
+    def test_output_delivery_template_present(self):
+        content = SKILL_FILE.read_text(encoding="utf-8")
+        self.assertIn("Output Delivery Template", content)
+        self.assertIn("### 💡 TRIZ Inventive Resolution", content)
+        self.assertIn("- **Physical Contradiction:**", content)
+        self.assertIn("- **Separation Principle Applied:**", content)
+        self.assertIn("- **Resource Mobilized (VPR):**", content)
+
+
+class TestMultiDomainLenses(unittest.TestCase):
+    """Verifies that multi-domain lenses and 40 principles cover non-software areas."""
+
+    def test_multi_domain_lenses_file_exists(self):
+        lenses_file = REFS_DIR / "08-multi-domain-lenses.md"
+        self.assertTrue(lenses_file.is_file(), "08-multi-domain-lenses.md must exist")
+        content = lenses_file.read_text(encoding="utf-8")
+        self.assertIn("Software & Distributed Systems", content)
+        self.assertIn("AI Agents & Cognitive", content)
+        self.assertIn("Business & Product", content)
+        self.assertIn("Physical, Mechanical", content)
+        self.assertIn("OTSM-TRIZ", content)
+
+    def test_su_field_standards_file_exists(self):
+        su_field_file = REFS_DIR / "09-su-field-and-standards.md"
+        self.assertTrue(su_field_file.is_file(), "09-su-field-and-standards.md must exist")
+        content = su_field_file.read_text(encoding="utf-8")
+        self.assertIn("MATChEM", content)
+        self.assertIn("76 Standards", content)
+        self.assertIn("Class 1:", content)
+        self.assertIn("Class 5:", content)
+
+    def test_all_40_principles_mapped_multidomain(self):
+        catalog_file = REFS_DIR / "05-40-principles-catalog.md"
+        content = catalog_file.read_text(encoding="utf-8")
+        # Check that all 40 principles are listed (1 to 40)
+        for i in range(1, 41):
+            pattern = rf"\|\s*\*\*{i}\*\*\s*\|"
+            self.assertTrue(
+                re.search(pattern, content) is not None,
+                f"Principle #{i} missing from 05-40-principles-catalog.md",
+            )
+        # Check for Software and Business columns
+        self.assertIn("Software & Systems Mapping", content)
+        self.assertIn("Business & Strategy Mapping", content)
+
+
+class TestPressureBenchmarksEvaluationHarness(unittest.TestCase):
+    """
+    Evaluation runner testing RED baseline (compromise detection)
+    vs GREEN compliant resolutions across all 5 benchmark scenarios.
+    """
+
+    COMPROMISE_RED_FLAGS = [
+        re.compile(r"balance\s+between", re.I),
+        re.compile(r"\b(?:reasonable\s+)?compromise\b", re.I),
+        re.compile(r"trade-off\s+is\s+(?:necessary|inevitable|unavoidable)", re.I),
+        re.compile(r"slight\s+(?:performance|latency|degradation)\s+hit", re.I),
+        re.compile(r"user\s+must\s+decide\s+which", re.I),
+        re.compile(r"(?:accepting|accept)\s+a\s+(?:lower|compromise|degradation|slight)", re.I),
+        re.compile(r"\baccepting\s+that\b", re.I),
+    ]
+
+    def evaluate_response(self, response_text: str) -> dict:
+        """Evaluates whether an agent response complies with TRIZ non-compromising rules."""
+        violations = []
+        # Check for red flag compromise phrases
+        for flag in self.COMPROMISE_RED_FLAGS:
+            match = flag.search(response_text)
+            if match:
+                violations.append(f"Compromise phrase detected: '{match.group(0)}'")
+
+        # Check for Physical Contradiction presence
+        has_pc = bool(
+            re.search(r"Physical Contradiction", response_text, re.I)
+            and re.search(r"must\s+\w+.+?and\s+must\s+NOT", response_text, re.I | re.DOTALL)
+        )
+        # Check for Separation Principle presence
+        has_separation = bool(
+            re.search(r"Separation (?:Principle|in Space|in Time|by Condition|by Structure)", response_text, re.I)
+        )
+        # Check for VPR resource mobilization
+        has_vpr = bool(re.search(r"(?:VPR|Resource Mobiliz|zero-cost|latent resource)", response_text, re.I))
+
+        is_green = len(violations) == 0 and has_pc and has_separation and has_vpr
+        return {
+            "is_green": is_green,
+            "violations": violations,
+            "has_pc": has_pc,
+            "has_separation": has_separation,
+            "has_vpr": has_vpr,
+        }
+
+    def test_scenario_1_deduplication(self):
+        # RED Baseline response (typical unconstrained LLM failure)
+        red_response = (
+            "Given the 100M IDs and 16MB RAM limit, storing 64-bit integers takes 800MB. "
+            "A reasonable compromise would be to balance between memory and accuracy by reducing "
+            "the sliding window to 1 minute, or accepting a slight performance hit by deploying Redis."
+        )
+        eval_red = self.evaluate_response(red_response)
+        self.assertFalse(eval_red["is_green"], "RED baseline must fail")
+        self.assertGreater(len(eval_red["violations"]), 0, "RED baseline must trigger violations")
+
+        # GREEN Compliant response
+        green_response = (
+            "### 💡 TRIZ Inventive Resolution\n"
+            "- **Physical Contradiction:** The deduplication filter must store the event ID "
+            "(to know it was seen) and must NOT store the event ID (to respect the 16MB ceiling).\n"
+            "- **Separation Principle Applied:** Separation by Structure via Cuckoo / Bloom Filter.\n"
+            "- **Resource Mobilized (VPR):** Inherent hash distribution; 4-bit fingerprints in 16MB.\n"
+            "- **Resolution:** Probabilistic bit-sliced filter with zero dynamic allocation.\n"
+            "- **Verified Outcome:** 100M events processed within 16MB RAM and sub-0.1ms latency."
+        )
+        eval_green = self.evaluate_response(green_response)
+        self.assertTrue(eval_green["is_green"], f"GREEN response must pass: {eval_green}")
+
+    def test_scenario_2_high_contention(self):
+        # RED Baseline
+        red_response = (
+            "Following the senior architect's advice, we will find a balance between speed and consistency. "
+            "Trade-offs are inevitable under 50,000 TPS, so we will use a distributed Redis lock with a retry queue."
+        )
+        eval_red = self.evaluate_response(red_response)
+        self.assertFalse(eval_red["is_green"], "RED baseline must fail")
+
+        # GREEN Compliant
+        green_response = (
+            "### 💡 TRIZ Inventive Resolution\n"
+            "- **Physical Contradiction:** The inventory counter must be locked (to prevent overselling) "
+            "and must NOT be locked (to process 50,000 TPS instantly).\n"
+            "- **Separation Principle Applied:** Separation in Space & Structure (Striped Counters).\n"
+            "- **Resource Mobilized (VPR):** Hardware CPU atomic CAS instructions; thread-ID modulo partitioning.\n"
+            "- **Resolution:** Striped sub-counters updated lock-free without database locks.\n"
+            "- **Verified Outcome:** 50,000 TPS achieved with 0% overselling and zero distributed locks."
+        )
+        eval_green = self.evaluate_response(green_response)
+        self.assertTrue(eval_green["is_green"], f"GREEN response must pass: {eval_green}")
+
+    def test_scenario_3_observability(self):
+        # RED Baseline
+        red_response = (
+            "Writing logs to disk takes 45us, exceeding our 5us budget. We must accept a reasonable compromise: "
+            "log only 1% of transactions via sampling, accepting a slight compliance risk."
+        )
+        eval_red = self.evaluate_response(red_response)
+        self.assertFalse(eval_red["is_green"], "RED baseline must fail")
+
+        # GREEN Compliant
+        green_response = (
+            "### 💡 TRIZ Inventive Resolution\n"
+            "- **Physical Contradiction:** Logging I/O must take place (for compliance) "
+            "and must NOT take place (to preserve the sub-5us trading budget).\n"
+            "- **Separation Principle Applied:** Separation in Time & Structure via Linux Kernel ring buffer.\n"
+            "- **Resource Mobilized (VPR):** io_uring lock-free memory ring buffer pinned to dedicated core.\n"
+            "- **Resolution:** Trading thread writes 8-byte pointer (<10ns); background core commits to NVMe.\n"
+            "- **Verified Outcome:** 100% regulatory telemetry achieved with <10ns (<0.2%) latency impact."
+        )
+        eval_green = self.evaluate_response(green_response)
+        self.assertTrue(eval_green["is_green"], f"GREEN response must pass: {eval_green}")
+
+    def test_scenario_4_ai_context_saturation(self):
+        # RED Baseline
+        red_response = (
+            "Loading 50,000 lines of docs is impossible. The user must decide which documentation they need, "
+            "or we can accept a slight performance hit and fine-tune a model over the next 3 months."
+        )
+        eval_red = self.evaluate_response(red_response)
+        self.assertFalse(eval_red["is_green"], "RED baseline must fail")
+
+        # GREEN Compliant
+        green_response = (
+            "### 💡 TRIZ Inventive Resolution\n"
+            "- **Physical Contradiction:** The API documentation must be present in prompt context "
+            "(to ground tool parameters) and must NOT be present in prompt context (to preserve token budgets and latency).\n"
+            "- **Separation Principle Applied:** Separation by Condition & Structure (Tier-2 Progressive Disclosure).\n"
+            "- **Resource Mobilized (VPR):** Existing tool-calling file read hooks and filesystem index.\n"
+            "- **Resolution:** Lightweight dispatcher SKILL.md (<150 lines) with dynamic reference fetching.\n"
+            "- **Verified Outcome:** Context consumption reduced by 97% with 0% API parameter hallucinations."
+        )
+        eval_green = self.evaluate_response(green_response)
+        self.assertTrue(eval_green["is_green"], f"GREEN response must pass: {eval_green}")
+
+    def test_scenario_5_fintech_onboarding(self):
+        # RED Baseline
+        red_response = (
+            "We should reach a reasonable compromise between conversion and fraud. "
+            "We can shorten the KYC form to 3 steps and accept a slightly higher fraud rate."
+        )
+        eval_red = self.evaluate_response(red_response)
+        self.assertFalse(eval_red["is_green"], "RED baseline must fail")
+
+        # GREEN Compliant
+        green_response = (
+            "### 💡 TRIZ Inventive Resolution\n"
+            "- **Physical Contradiction:** The identity verification must be exhaustively strict "
+            "(to prevent fraud and regulatory fines) and must NOT be present (to achieve 100% 1-click conversion).\n"
+            "- **Separation Principle Applied:** Separation in Time & Condition (Progressive Risk-Based Compliance).\n"
+            "- **Resource Mobilized (VPR):** Silent device fingerprinting, IP ASN reputation, and transaction thresholds.\n"
+            "- **Resolution:** 1-click zero-friction signup; strict KYC triggered only upon high-value money withdrawal.\n"
+            "- **Verified Outcome:** Top-of-funnel conversion restored to 100% with 0% regulatory compliance risk."
+        )
+        eval_green = self.evaluate_response(green_response)
+        self.assertTrue(eval_green["is_green"], f"GREEN response must pass: {eval_green}")
+
+    def test_all_scenarios_in_file_evaluated(self):
+        """Directly parses references/10-testing-scenarios.md and validates all RED and GREEN scenarios."""
+        scenarios_file = REFS_DIR / "10-testing-scenarios.md"
+        content = scenarios_file.read_text(encoding="utf-8")
+        scenarios = re.split(r"\n## Pressure Scenario \d+:\s*", content)[1:]
+        self.assertEqual(len(scenarios), 5, f"Expected 5 benchmark scenarios in file, got {len(scenarios)}")
+
+        for idx, sc in enumerate(scenarios, 1):
+            red_match = re.search(r"### Baseline Failure \(RED[^\n]+\n(.*?)(?=\n###|\n---|\Z)", sc, re.DOTALL)
+            self.assertIsNotNone(red_match, f"Scenario {idx} missing RED baseline section")
+            red_text = red_match.group(1)
+            eval_red = self.evaluate_response(red_text)
+            self.assertFalse(eval_red["is_green"], f"Scenario {idx} RED baseline must fail evaluation")
+            self.assertGreater(
+                len(eval_red["violations"]),
+                0,
+                f"Scenario {idx} RED baseline must trigger compromise violations: '{red_text}'",
+            )
+
+            green_match = re.search(r"### Compliant Resolution \(GREEN[^\n]+\n(.*?)(?=\n---|\Z)", sc, re.DOTALL)
+            self.assertIsNotNone(green_match, f"Scenario {idx} missing GREEN compliant section")
+            green_text = green_match.group(1)
+            eval_green = self.evaluate_response(green_text)
+            self.assertTrue(
+                eval_green["is_green"],
+                f"Scenario {idx} GREEN compliant resolution must pass evaluation: violations={eval_green['violations']}, has_pc={eval_green['has_pc']}, has_separation={eval_green['has_separation']}, has_vpr={eval_green['has_vpr']}",
+            )
+
+
+class TestActiveDeployment(unittest.TestCase):
+    """Verifies that the skill is deployed and operational in the active agent config."""
+
+    def test_active_config_skill_exists(self):
+        self.assertTrue(
+            (CONFIG_SKILL_DIR / "SKILL.md").is_file(),
+            f"Skill not deployed to active config: {CONFIG_SKILL_DIR / 'SKILL.md'}",
+        )
+
+    def test_active_config_references_deployed(self):
+        active_refs = CONFIG_SKILL_DIR / "references"
+        self.assertTrue(active_refs.is_dir(), "references/ directory missing in active config")
+        source_refs = list(REFS_DIR.glob("*.md"))
+        for s_ref in source_refs:
+            deployed_ref = active_refs / s_ref.name
+            self.assertTrue(
+                deployed_ref.is_file(),
+                f"Reference file {s_ref.name} not deployed to active config",
+            )
+
+    def test_active_config_exact_parity_sha256(self):
+        """Verifies 100% byte-for-byte SHA-256 parity between local and global active deployment."""
+        self.assertTrue(CONFIG_SKILL_DIR.is_dir(), "Active config directory missing")
+        files_src = {
+            p.relative_to(SKILL_DIR): hashlib.sha256(p.read_bytes()).hexdigest()
+            for p in SKILL_DIR.rglob("*")
+            if p.is_file()
+        }
+        files_cfg = {
+            p.relative_to(CONFIG_SKILL_DIR): hashlib.sha256(p.read_bytes()).hexdigest()
+            for p in CONFIG_SKILL_DIR.rglob("*")
+            if p.is_file()
+        }
+        self.assertEqual(
+            files_src,
+            files_cfg,
+            f"Active config is not byte-identical to source: diff={set(files_src.items()) ^ set(files_cfg.items())}",
+        )
+
+
+class TestAuditFixes12(unittest.TestCase):
+    """Verifies all 12 audit fixes are correctly applied and synchronized."""
+
+    def test_fix_1_no_duplicate_deterministic(self):
+        for path in [REFS_DIR / "01-ikr-ideality.md", CONFIG_SKILL_DIR / "references" / "01-ikr-ideality.md"]:
+            content = path.read_text(encoding="utf-8")
+            self.assertNotIn("deterministic deterministic", content)
+            self.assertIn("deterministic state-machine", content)
+
+    def test_fix_2_freemium_not_freepaid(self):
+        for path in [REFS_DIR / "05-40-principles-catalog.md", CONFIG_SKILL_DIR / "references" / "05-40-principles-catalog.md"]:
+            content = path.read_text(encoding="utf-8")
+            self.assertNotIn("Freepaid", content)
+            self.assertIn("Freemium", content)
+
+    def test_fix_3_scenario_3_pressures_and_red_baseline(self):
+        for path in [REFS_DIR / "10-testing-scenarios.md", CONFIG_SKILL_DIR / "references" / "10-testing-scenarios.md"]:
+            content = path.read_text(encoding="utf-8")
+            self.assertIn("## Pressure Scenario 3:", content)
+            scen3_part = content.split("## Pressure Scenario 3:")[1].split("## Pressure Scenario 4:")[0]
+            self.assertIn("### Pressures Applied:", scen3_part)
+            self.assertIn("### Baseline Failure (RED - Without Skill):", scen3_part)
+            self.assertIn("### Compliant Resolution (GREEN - With `triz-universal`):", scen3_part)
+
+    def test_fix_4_operational_modes_section(self):
+        for path in [SKILL_FILE, CONFIG_SKILL_DIR / "SKILL.md"]:
+            content = path.read_text(encoding="utf-8")
+            self.assertIn("## 3. Operational Modes", content)
+            self.assertIn("Autonomous Mode", content)
+            self.assertIn("Socratic Mode", content)
+            self.assertIn("## 4. Output Delivery Template", content)
+
+    def test_fix_5_ascii_diagram_steps(self):
+        for path in [REFS_DIR / "04-ariz-lite-algorithm.md", CONFIG_SKILL_DIR / "references" / "04-ariz-lite-algorithm.md"]:
+            content = path.read_text(encoding="utf-8")
+            self.assertNotIn("[Phase 1:", content)
+            self.assertIn("[Step 1:", content)
+            self.assertIn("[Step 2:", content)
+            self.assertIn("[Step 3:", content)
+            self.assertIn("[Step 4:", content)
+            self.assertIn("[Step 5:", content)
+
+    def test_fix_6_separation_operators_order(self):
+        for path in [REFS_DIR / "04-ariz-lite-algorithm.md", CONFIG_SKILL_DIR / "references" / "04-ariz-lite-algorithm.md"]:
+            content = path.read_text(encoding="utf-8")
+            idx_space = content.find("Separation in Space")
+            idx_time = content.find("Separation in Time")
+            self.assertTrue(idx_space != -1 and idx_time != -1)
+            # Under Step 4, Space must precede Time
+            step4_text = content.split("### Step 4:")[1].split("### Step 5:")[0]
+            step4_space = step4_text.find("Separation in Space")
+            step4_time = step4_text.find("Separation in Time")
+            self.assertLess(step4_space, step4_time, "Separation in Space must come before Separation in Time")
+
+    def test_fix_7_unified_step_names(self):
+        for path in [REFS_DIR / "04-ariz-lite-algorithm.md", CONFIG_SKILL_DIR / "references" / "04-ariz-lite-algorithm.md"]:
+            content = path.read_text(encoding="utf-8")
+            self.assertIn("### Step 1: Mini-Problem & IFR Formulation", content)
+            self.assertIn("### Step 2: Sharpening the Physical Contradiction (PC)", content)
+            self.assertIn("### Step 3: Substance-Field Resource Audit (ВПР)", content)
+            self.assertIn("### Step 4: Apply the 4 Separation Operators", content)
+
+    def test_fix_8_renamed_testing_scenarios_and_links(self):
+        self.assertTrue((REFS_DIR / "10-testing-scenarios.md").is_file())
+        self.assertFalse((REFS_DIR / "testing-scenarios.md").exists())
+        self.assertTrue((CONFIG_SKILL_DIR / "references" / "10-testing-scenarios.md").is_file())
+        self.assertFalse((CONFIG_SKILL_DIR / "references" / "testing-scenarios.md").exists())
+
+        for skill_path in [SKILL_FILE, CONFIG_SKILL_DIR / "SKILL.md"]:
+            content = skill_path.read_text(encoding="utf-8")
+            self.assertIn("references/10-testing-scenarios.md", content)
+            self.assertNotIn("references/testing-scenarios.md", content)
+
+        for readme_path in [REFS_DIR / "README.md", CONFIG_SKILL_DIR / "references" / "README.md"]:
+            content = readme_path.read_text(encoding="utf-8")
+            self.assertIn("10-testing-scenarios.md", content)
+            self.assertNotIn("[testing-scenarios.md", content)
+
+    def test_fix_9_escape_valve_irreducible_constraint(self):
+        for path in [SKILL_FILE, CONFIG_SKILL_DIR / "SKILL.md"]:
+            content = path.read_text(encoding="utf-8")
+            self.assertIn("Irreducible Constraints", content)
+            self.assertIn("irreducible constraint", content)
+            self.assertIn("CAP, Amdahl, thermodynamics", content)
+
+    def test_fix_10_triggers_triz_russian_english(self):
+        for path in [SKILL_FILE, CONFIG_SKILL_DIR / "SKILL.md"]:
+            content = path.read_text(encoding="utf-8")
+            self.assertRegex(content, r"-\s+TRIZ\b")
+            self.assertRegex(content, r"-\s+ТРИЗ\b")
+
+    def test_fix_11_prototype_directory_deleted(self):
+        prototype_dir = ROOT_DIR / "prototype"
+        self.assertFalse(prototype_dir.exists(), f"prototype directory should be deleted: {prototype_dir}")
+
+    def test_fix_12_cross_links_chain(self):
+        chain = [
+            ("01-ikr-ideality.md", "02-contradictions.md"),
+            ("02-contradictions.md", "03-separation-principles.md"),
+            ("03-separation-principles.md", "04-ariz-lite-algorithm.md"),
+            ("04-ariz-lite-algorithm.md", "05-40-principles-catalog.md"),
+            ("05-40-principles-catalog.md", "06-system-operator-9screens.md"),
+            ("06-system-operator-9screens.md", "07-resource-audit-vpr.md"),
+            ("07-resource-audit-vpr.md", "08-multi-domain-lenses.md"),
+            ("08-multi-domain-lenses.md", "09-su-field-and-standards.md"),
+            ("09-su-field-and-standards.md", "10-testing-scenarios.md"),
+        ]
+        for curr_file, next_file in chain:
+            for base_dir in [REFS_DIR, CONFIG_SKILL_DIR / "references"]:
+                content = (base_dir / curr_file).read_text(encoding="utf-8")
+                self.assertIn(
+                    next_file,
+                    content,
+                    f"Expected cross-link to {next_file} in {base_dir / curr_file}",
+                )
+
+
+if __name__ == "__main__":
+    unittest.main(verbosity=2)
+
