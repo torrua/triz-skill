@@ -1,12 +1,12 @@
 ---
 description: >-
-  Formulation of the Ideal Final Result (IFR / ИКР) and Ideality Equation across multiple domains for AI agents.
+  Formulation of the Ideal Final Result (IFR) and Ideality Equation across multiple domains for AI agents.
 metadata:
   tags: [ikr, ifr, ideality, zero-cost, anti-bloat, multi-domain]
   source: TRIZ-Classical & Modern
 ---
 
-# 01. The Ideal Final Result (IFR / ИКР) & Ideality Calculus
+# 01. The Ideal Final Result (IFR) & Ideality Calculus
 
 > *"The ideal machine is one whose mass, volume, and cost approach zero, but whose ability to perform work does not diminish."* — Genrich Altshuller
 

@@ -1,0 +1,58 @@
+[
+  {
+    "id": "distributed-inventory-consistency",
+    "prompt": "Serve low-latency catalog reads while never overselling inventory across multiple services.",
+    "hard_constraints": [
+      "Inventory reservation must be linearizable at the decision point.",
+      "The response must state whether catalog reads may be stale."
+    ],
+    "disallowed_claims": [
+      "Asynchronous CDC provides instantaneous global consistency.",
+      "A read replica is not an additional component."
+    ],
+    "expected_outcome": "eliminate",
+    "required_evidence": ["consistency model", "lag or staleness measurement", "failure recovery plan"]
+  },
+  {
+    "id": "regulated-onboarding",
+    "prompt": "Reduce onboarding abandonment without violating KYC/AML, privacy, or licensing requirements.",
+    "hard_constraints": [
+      "Jurisdiction-specific KYC/AML obligations.",
+      "Lawful basis and consent for telemetry." 
+    ],
+    "disallowed_claims": [
+      "Device, SIM, or IP data is free and lawful by default.",
+      "Deferred KYC is compliant in every jurisdiction."
+    ],
+    "expected_outcome": "prove-limit",
+    "required_evidence": ["jurisdiction gate", "privacy review", "approved state machine"]
+  },
+  {
+    "id": "memory-latency-budget",
+    "prompt": "Meet a 16 MB memory limit and sub-millisecond deduplication latency for a defined event stream.",
+    "hard_constraints": [
+      "16 MB process-memory limit.",
+      "Specified false-positive and false-negative tolerances."
+    ],
+    "disallowed_claims": [
+      "A probabilistic filter has zero error without a proof.",
+      "OS cache consumes no memory."
+    ],
+    "expected_outcome": "managed-tradeoff",
+    "required_evidence": ["data distribution", "error budget", "benchmark environment"]
+  },
+  {
+    "id": "cap-availability-consistency",
+    "prompt": "Keep writes strongly consistent and remain available during a network partition.",
+    "hard_constraints": [
+      "Network partitions are in scope.",
+      "Strong consistency means a linearizable write acknowledgement."
+    ],
+    "disallowed_claims": [
+      "CAP can be eliminated by a cache or retry queue.",
+      "Eventual consistency satisfies a linearizable write invariant."
+    ],
+    "expected_outcome": "prove-limit",
+    "required_evidence": ["formal consistency definition", "partition behavior", "authorized availability trade-off"]
+  }
+]

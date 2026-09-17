@@ -1,15 +1,15 @@
 ---
 description: >-
-  Contradiction Matrix lookup for AI agents: 39 TRIZ parameters mapped to software/AI/business equivalents,
-  top-50 parameter-pair recommendations, and Matrix 2003 guidance.
+  Curated heuristic lookup for AI agents: 39 TRIZ parameters mapped to software/AI/business equivalents
+  and 30 software-oriented principle prompts. It is not a complete reproduction of any contradiction matrix.
 metadata:
   tags: [contradiction-matrix, 39-parameters, altshuller-matrix, matrix-2003, lookup]
-  source: TRIZ-Classical & Matrix 2003
+  source: Curated adaptation; see SOURCES.md and CLAIMS.md
 ---
 
-# 11. Contradiction Matrix & Parameter Lookup
+# 11. Curated Contradiction Lookup & Parameter Mapping
 
-When a **Technical Contradiction** has been identified (improving Parameter A degrades Parameter B), use this matrix to find the most promising **Inventive Principles** from the 40.
+When a **Technical Contradiction** has been identified (improving Parameter A degrades Parameter B), use this curated heuristic lookup to generate candidate **Inventive Principles**. It does not prove feasibility, provide a complete 39×39 or Matrix 2003 dataset, or replace the Physical Contradiction and VPR steps.
 
 ---
 
@@ -65,7 +65,7 @@ When a **Technical Contradiction** has been identified (improving Parameter A de
 
 1. **Identify the improving parameter** — what you want to make better (row)
 2. **Identify the worsening parameter** — what degrades as a result (column)
-3. **Find the intersection** — it lists 2-4 recommended Inventive Principles
+3. **Find the matching curated pair** — it lists 2-4 candidate Inventive Principles
 4. **Read each principle** from [05-40-principles-catalog.md](05-40-principles-catalog.md)
 5. **Apply** each principle to your specific physical contradiction
 
@@ -78,7 +78,7 @@ Matrix cell [9, 1] → Principles: **2 (Taking Out)**, **28 (Mechanics Substitut
 - **Principle 2 (Taking Out):** Extract only hot-path data into cache; leave cold data on disk
 - **Principle 28:** Replace in-memory cache with computed/derived values (memoization of functions, not data)
 - **Principle 13:** Instead of caching responses, pre-reject invalid requests earlier in the pipeline
-- **Principle 38:** Use OS page cache (already exists, zero new memory allocation) instead of application-level cache
+- **Principle 38:** Evaluate OS page cache before an application-level cache; it still consumes memory and requires workload measurement.
 
 ---
 
@@ -119,20 +119,20 @@ Matrix cell [9, 1] → Principles: **2 (Taking Out)**, **28 (Mechanics Substitut
 
 ---
 
-## Matrix 2003 vs Classical Altshuller Matrix
+## Relationship to Classical and 2003 Matrices
 
-| Aspect | Altshuller (1971) | Matrix 2003 |
+| Aspect | Classical Altshuller matrix | Matrix 2003 family |
 |---|---|---|
-| **Data source** | ~40,000 patents (pre-1970s) | ~400,000+ patents (through 2003) |
-| **Parameters** | 39 | 48 (added 9 new: information, adaptability, etc.) |
-| **Coverage** | 1,263 cells filled (83%) | ~2,500 cells filled |
-| **Recommendations** | 2-4 principles per cell | Up to 7 principles per cell |
-| **Domain bias** | Mechanical engineering | More balanced across domains |
+| **Use in this skill** | Vocabulary source for the 39 parameter labels | Context only; no complete Matrix 2003 data is bundled |
+| **Dataset included here** | No full matrix; only 30 curated software pairs | No Matrix 2003 cells or statistics |
+| **Recommendation strength** | Candidate ideation prompts, not prescriptions | Consult a licensed, versioned primary source before claiming an exact lookup |
+| **Domain bias** | Mechanical patent history | Varies by the specific published edition |
 
-**When to use Matrix 2003:** When the classical matrix returns empty cells or when the problem involves information-heavy systems (software, AI).
+**Use note:** The mappings above are software/business analogies. Treat them as hypotheses to test, and record the source and confidence of any claim in the final resolution.
 
 ---
 
 **Index:** [README.md](README.md)
 **Related:** [02-contradictions.md](02-contradictions.md) — How to sharpen Technical → Physical Contradictions before matrix lookup.
 **Related:** [05-40-principles-catalog.md](05-40-principles-catalog.md) — Detailed descriptions of all 40 Inventive Principles.
+**Provenance:** [SOURCES.md](SOURCES.md) and [CLAIMS.md](CLAIMS.md).

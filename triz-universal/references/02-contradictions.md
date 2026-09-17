@@ -47,7 +47,7 @@ Pinpoint the exact physical, logical, or organizational entity where the two dem
 - Business: Onboarding form, pricing gate, approval tier, sales commission policy.
 - Physical: Enclosure wall, turbine blade, gear teeth, electrical conductor.
 
-### Step 2.3: Drive to the Extreme Limit (Предельное Обострение)
+### Step 2.3: Drive to the Extreme Limit (Limit Sharpening)
 Moderate formulations invite compromise. Drive values to infinity and zero:
 - Not *"The buffer should be somewhat smaller"* $\longrightarrow$ *"The buffer must occupy ZERO bytes."*
 - Not *"The function should be reasonably fast"* $\longrightarrow$ *"The function must complete in ZERO milliseconds."*

@@ -23,14 +23,14 @@ An e-commerce platform needs sub-5ms read latency for product catalog pages AND 
 
 | Step | Expected Output |
 |---|---|
-| **IFR** | The database itself, at zero additional cost, delivers 5ms reads AND ACID writes |
+| **IFR** | The existing data platform meets the stated read-latency target while preserving the required inventory-write invariant |
 | **Physical Contradiction** | Data access mode must be **lock-free** (for fast reads) AND **locked** (for consistent writes) |
 | **VPR Resources** | PostgreSQL MVCC (already built-in), OS page cache, WAL sequential writes |
 | **Separation** | **Time** — readers see snapshot at $T_{read}$ (lock-free), writers commit at $T_{write}$ (locked) |
-| **Reference Solution** | MVCC with read replicas: reads from snapshot (zero locks), writes to primary (ACID). Already built into PostgreSQL — zero new components |
+| **Reference Solution** | First measure PostgreSQL MVCC and indexed primary reads. If a replica is added, treat it as a new component and specify acceptable replica lag; route inventory decisions to the primary or another strongly consistent path. |
 
 ### Scoring Criteria
-- ✅ **Pass** if: Solution uses MVCC/snapshots or equivalent temporal separation without adding external cache
+- ✅ **Pass** if: Solution states which reads may be stale, preserves the inventory invariant, and measures latency on the chosen topology
 - ❌ **Fail** if: Proposes adding Redis cache, or suggests "accepting eventual consistency as a reasonable trade-off"
 
 ---
@@ -65,15 +65,15 @@ A SaaS platform wants teams to deploy independently (autonomous microservices) A
 
 | Step | Expected Output |
 |---|---|
-| **IFR** | Services deploy independently AND data remains perfectly consistent — without distributed transactions |
+| **IFR** | Services deploy independently while each stated data invariant has an explicit owner, delivery guarantee, and recovery path |
 | **Physical Contradiction** | Data ownership must be **local** (service autonomy) AND **global** (cross-service consistency) |
 | **VPR Resources** | Event logs (already generated), idempotency keys, domain events, database CDC streams |
-| **Separation** | **Structure** — each service owns local data (subsystem: autonomy), event-driven saga ensures global consistency (supersystem: integrity) |
-| **Reference Solution** | Outbox pattern + CDC: each service writes to local DB (autonomous), CDC streams events to other services (consistent). Zero distributed transactions |
+| **Separation** | **Structure** — each service owns local data; an event-driven saga coordinates cross-service convergence with explicit compensation and idempotency |
+| **Reference Solution** | Outbox + CDC can provide atomic local write-and-publish, at-least-once delivery, and eventual convergence. It does not create instantaneous global consistency; define compensations, lag bounds, and user-visible states. |
 
 ### Scoring Criteria
-- ✅ **Pass** if: Event sourcing, saga, or outbox pattern using existing DB capabilities
-- ❌ **Fail** if: "Use distributed transactions (2PC)" or "Accept eventual inconsistency as a trade-off"
+- ✅ **Pass** if: Event sourcing, saga, or outbox names the consistency model, idempotency strategy, recovery flow, and unacceptable states
+- ❌ **Fail** if: It claims perfect global consistency from asynchronous CDC or omits recovery for dual-write failure
 
 ---
 
@@ -109,10 +109,10 @@ A developer tools company wants maximum community adoption (free, open-source, M
 |---|---|
 | **IFR** | The product is 100% open AND generates sustainable revenue — without restricting the open version |
 | **Physical Contradiction** | Product must be **free** (adoption) AND **paid** (revenue) |
-| **VPR Resources** | Community contributions (free labor), brand trust, data from usage patterns, enterprise compliance requirements |
+| **VPR Resources** | Brand trust, existing product capability, and enterprise requirements; community work is voluntary and must never be modeled as free labor |
 | **Separation** | **Structure** — core is free (subsystem: adoption), enterprise features/support/SLA are paid (supersystem: revenue) |
 | **Alternative: Condition** | Free for individuals/startups ($C_1$), paid for enterprises above revenue threshold ($C_2$) |
-| **Reference Solution** | Open-core model: MIT-licensed core attracts 100K users (adoption); managed cloud + SSO + audit logs sold to enterprises (revenue). Both parameters maximized |
+| **Reference Solution** | Open-core can separate an MIT-licensed core from paid hosting, support, SSO, and audit features. Validate licensing, cloud operating cost, conversion rate, and whether the paid layer preserves the stated openness constraint. |
 
 ### Scoring Criteria
 - ✅ **Pass** if: Open-core, usage-based pricing, or value-layer separation — not restricting the open version

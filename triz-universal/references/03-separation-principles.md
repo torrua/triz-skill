@@ -57,7 +57,7 @@ When an atomic Physical Contradiction ($X$ must be $P$ and $\neg P$) has been fo
 
 ---
 
-## 1. Separation in Space (Разделение в пространстве)
+## 1. Separation in Space
 
 ### Heuristic Rule:
 Requirement $P$ and requirement $\neg P$ are assigned to different physical, logical, geographic, or architectural locations.
@@ -156,12 +156,12 @@ Find a single resource, mechanism, or design that delivers **both** $P$ and $\ne
 
 ### Multi-Domain Patterns:
 * **Software & Systems:**
-  - *Memory-mapped files:* Data is simultaneously **on disk** (persistent, crash-safe) AND **in RAM** (fast random access) — the OS page cache makes both true at once.
-  - *Append-only logs (LSM trees):* Writes are **sequential** (fast I/O) AND **durable** (persisted immediately) — no trade-off between write speed and durability.
+  - *Memory-mapped files:* The same file-backed data can be accessed through virtual memory and persisted on storage. This can improve access patterns, but durability still depends on filesystem semantics and explicit flush policy, and page cache still consumes memory.
+  - *Append-only logs (LSM trees):* Sequential writes can improve write throughput while maintaining an explicit durability policy. Evaluate fsync latency, compaction, read amplification, and recovery time; this is a candidate pattern, not a trade-off-free guarantee.
 * **AI Agents & LLMs:**
-  - *FIDO2/Passkeys:* Authentication is **cryptographically strong** (256-bit key, phishing-resistant) AND **frictionless** (fingerprint touch, zero passwords) — both security and UX maximized simultaneously.
+  - *FIDO2/Passkeys:* Passkeys can combine phishing-resistant cryptography with a low-friction biometric/device flow. Confirm platform support, account recovery, accessibility, and regulatory requirements for the specific deployment.
 * **Business & Strategy:**
-  - *Freemium with network effects:* Product is **free** (maximum adoption) AND **profitable** (every free user makes the product better for paid users via data/network effects).
+  - *Freemium with network effects:* A free tier and paid value layer may separate adoption from revenue. Validate unit economics, data rights, conversion assumptions, and support costs before treating it as profitable.
 * **Physical Engineering:**
   - *Aerogel insulation:* Material is **extremely light** (99.8% air) AND **extremely insulating** (lowest thermal conductivity of any solid) — both properties coexist inherently.
 
@@ -202,8 +202,8 @@ When the physical contradiction is inherent to the **system type itself**, resol
 
 ### Multi-Domain Patterns:
 * **Software & Systems:**
-  - *Monolith → Serverless:* Instead of optimizing a monolith's scaling vs complexity trade-off, transition to an event-driven serverless architecture where the contradiction doesn't exist.
-  - *SQL → Event Sourcing:* Instead of balancing read/write performance in a relational DB, transition to a system where reads and writes are fundamentally different operations.
+  - *Monolith → Serverless:* Consider event-driven serverless where its operational constraints fit the workload; disclose provider cost, cold-start, observability, and lock-in risks.
+  - *SQL → Event Sourcing:* Consider event sourcing when explicit event history and separated read models fit the domain; disclose replay, consistency, and operational complexity.
 * **AI Agents & LLMs:**
   - *Single LLM → Multi-Agent Swarm:* Instead of making one model smart AND fast, transition to a system of specialized agents where each is optimized for one dimension.
 * **Business & Strategy:**

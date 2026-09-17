@@ -1,32 +1,32 @@
 # triz-universal — AI Skill for Non-Compromising Inventive Problem Solving
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-53%20passed-brightgreen.svg)](#testing)
+[![Tests](https://img.shields.io/badge/tests-local%20validation-blue.svg)](#testing)
 [![Platform](https://img.shields.io/badge/platform-Antigravity-blue.svg)](https://github.com/google-deepmind)
 
-> **Core Axiom:** A compromise is an admission of failure. A true inventive solution eliminates the contradiction so that Parameter A improves without Parameter B deteriorating.
+> **Core Axiom:** Seek an inventive resolution first; when a hard limit remains, state its evidence and consequences rather than inventing a guarantee.
 
 ## What is this?
 
-An AI agent skill that enforces **TRIZ (Теория Решения Изобретательских Задач)** — the Theory of Inventive Problem Solving — developed by Genrich Altshuller. Instead of letting the AI propose trade-offs and "balanced middle-ground" solutions, this skill forces the agent through a rigorous 5-step **ARIZ-AI pipeline** that eliminates contradictions using only existing system resources.
+An AI agent skill that applies **TRIZ (Теория Решения Изобретательских Задач)** — the Theory of Inventive Problem Solving — developed by Genrich Altshuller. It drives the agent through a 5-step **ARIZ-AI pipeline** to seek contradiction-eliminating designs, classify constraints, and distinguish evidence-backed conclusions from hypotheses.
 
 ## Key Features
 
 | Feature | Description |
 |---|---|
-| 🚫 **Anti-Compromise Guardrails** | 5 rules + Red Flags that prevent the AI from proposing trade-offs |
+| 🚫 **Anti-Rationalization Guardrails** | Requires contradiction analysis before an unauthorized trade-off |
 | ⚡ **ARIZ-AI 5-Step Pipeline** | IFR → Physical Contradiction → VPR Audit → 7 Resolution Strategies → Verification |
 | 🔬 **7 Resolution Strategies** | 4 Separation Operators + Satisfy, Bypass, Alternative System (Litvin + Zlotin/Zusman) |
 | 🧭 **Diagnostic Questions** | Zlotin/Zusman navigation: WHERE? WHEN? CONDITION? → instant strategy selection |
-| 📊 **Contradiction Matrix** | 39 parameters mapped to software/AI/business + top-30 lookup pairs |
-| 📚 **13 Reference Modules** | Progressive context disclosure — loaded on demand, not all at once |
+| 📊 **Curated Lookup** | 39 parameters mapped to software/AI/business + 30 candidate principle pairs |
+| 📚 **15 Reference Modules** | Progressive context disclosure — loaded on demand, not all at once |
 | 🌐 **Multi-Domain** | Software, AI/LLM, Business/Fintech, Physics, Organizations |
 | 🗺️ **Perception Mapping** | Business TRIZ for organizational contradictions and stakeholder conflicts |
 | ⚖️ **Escape Valve** | Honest handling of irreducible constraints (CAP, Amdahl, thermodynamics) |
 | 🎯 **Three Modes** | Autonomous (default), Semi-Automatic, and Socratic (interactive) |
-| 🔍 **Reasoning Traceability** | Output template logs which principle was chosen and WHY |
-| 📝 **Evaluation Suite** | 5 reference problems with expected solutions and pass/fail scoring |
-| ✅ **53 Automated Tests** | Structural validation + RED/GREEN pressure benchmarks + SHA-256 parity |
+| 🔍 **Evidence & Risk Traceability** | Output records confidence, validation plan, and residual risks |
+| 📝 **Evaluation Assets** | Reference problems plus blind expert-review cases |
+| ✅ **Portable Validation** | Source checks run locally; deployment parity is an explicit release check |
 
 ## Architecture
 
@@ -45,9 +45,11 @@ triz-universal/
     ├── 08-multi-domain-lenses.md      Cross-domain mapping + OTSM-TRIZ
     ├── 09-su-field-and-standards.md   Su-Field Analysis & 76 Standards
     ├── 10-testing-scenarios.md        5 RED/GREEN pressure benchmarks
-    ├── 11-contradiction-matrix.md     39 parameters + matrix lookup
+    ├── 11-contradiction-matrix.md     Curated 39-parameter lookup
     ├── 12-evaluation-suite.md         5 reference problems with scoring
-    └── 13-perception-mapping.md       Business TRIZ for organizations
+    ├── 13-perception-mapping.md       Business TRIZ for organizations
+    ├── SOURCES.md                      Provenance policy
+    └── CLAIMS.md                       Claim register and evidence levels
 ```
 
 **Why Tier-2?** Loading all TRIZ theory into context at once wastes tokens and causes "lost in the middle" degradation. The dispatcher `SKILL.md` is always loaded (~144 lines); reference modules are loaded **only when needed**.
@@ -78,15 +80,16 @@ When you present the agent with a problem like:
 
 Instead of saying *"Let's find a reasonable balance..."*, the TRIZ skill forces the agent to:
 
-1. **Frame the IFR** — "The system itself, at zero cost, delivers both 10ms latency AND full ACID consistency"
-2. **Sharpen the Physical Contradiction** — "The data must be in-memory (fast) AND on-disk (consistent)"
-3. **Audit free resources (VPR)** — OS page cache, WAL logs, idle CPU cores
-4. **Apply Separation** — e.g., Separation in Structure: hot data in memory-mapped files, cold data on disk
-5. **Verify** — Parameter A improved? Parameter B unimpaired? No new dependencies?
+1. **Classify constraints** — distinguish non-negotiable invariants from targets and assumptions.
+2. **Frame the IFR** — use the ideal result as a search direction, not an unsupported promise.
+3. **Sharpen the Physical Contradiction** — "The data access path must be lock-free for reads AND locked for the inventory invariant."
+4. **Audit resources (VPR)** — assess availability, cost, permissions, and reliability of page cache, WAL, and idle CPU.
+5. **Apply Separation** — create a design, then state its consistency, cost, and operational implications.
+6. **Verify** — define baseline, measurable thresholds, evidence, and residual risks.
 
 ## Testing
 
-Run the full test suite (53 tests):
+Run the portable source test suite:
 
 ```bash
 python tests/test_triz_skill.py
@@ -99,8 +102,16 @@ Tests cover:
 - ARIZ-AI pipeline formulation
 - All 12 audit fixes verification
 - RED/GREEN pressure benchmark evaluation
-- SHA-256 parity between working and deployed copies
-- **v2.0.0:** 7 strategies, diagnostic questions, contradiction matrix, evaluation suite, perception mapping, semi-automatic mode, reasoning traceability
+- constraint classification, evidence, verification, and risk reporting
+- provenance and claim registers
+- behavioral-evaluation assets distinct from phrase-based linting
+
+To check or synchronize an installed copy, provide its explicit destination:
+
+```powershell
+.\scripts\sync-deployment.ps1 -Mode Check -Destination "C:\path\to\triz-universal"
+.\scripts\sync-deployment.ps1 -Mode Apply -Destination "C:\path\to\triz-universal"
+```
 
 ## Roadmap
 
@@ -112,15 +123,15 @@ Tests cover:
 - ✅ 39 automated tests
 - ✅ Escape valve for irreducible constraints
 
-### v2.0.0 (Current Release)
-- ✅ CSV/YAML contradiction matrices (Altshuller 39×39 + Matrix 2003) for deterministic lookup
+### v2.1.0 (Current Release)
+- ✅ Curated, explicitly non-deterministic contradiction lookup
 - ✅ Inventive principles mapped to each separation operator
 - ✅ Evaluation suite with 5 reference solutions and pass/fail scoring
 - ✅ Reasoning traceability — diagnostic path and principle selection logged in output
 - ✅ Litvin + Zlotin/Zusman dual strategy sets (Satisfy, Bypass, Alternative System)
 - ✅ Semi-automatic mode (between Autonomous and Socratic)
 - ✅ Perception Mapping for organizational/people contradictions
-- ✅ 53 automated tests
+- ✅ Constraint classification, provenance, and release synchronization
 
 ## Acknowledgments
 

@@ -5,8 +5,12 @@ and evaluates RED vs GREEN benchmark pressure scenarios across multiple domains.
 """
 
 import hashlib
+import json
 import os
 import re
+import shutil
+import subprocess
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -15,7 +19,16 @@ ROOT_DIR = Path(__file__).resolve().parent.parent
 SKILL_DIR = ROOT_DIR / "triz-universal"
 SKILL_FILE = SKILL_DIR / "SKILL.md"
 REFS_DIR = SKILL_DIR / "references"
-CONFIG_SKILL_DIR = Path(r"C:\Users\User\.gemini\config\skills\triz-universal")
+deployment_dir = os.environ.get("TRIZ_DEPLOY_DIR")
+CONFIG_SKILL_DIR = Path(deployment_dir) if deployment_dir else None
+
+
+def skill_paths(relative_path: str) -> list[Path]:
+    """Return source plus an explicitly requested deployed copy, if any."""
+    paths = [SKILL_DIR / relative_path]
+    if CONFIG_SKILL_DIR is not None:
+        paths.append(CONFIG_SKILL_DIR / relative_path)
+    return paths
 
 
 def parse_frontmatter(content: str) -> tuple[dict, str]:
@@ -147,6 +160,97 @@ class TestReferenceIntegrity(unittest.TestCase):
                 500,
                 f"Reference file {ref_file.name} exceeds 500 lines: {len(lines)} lines",
             )
+
+
+class TestReliabilityContract(unittest.TestCase):
+    """Guards against unsupported guarantees in the production skill."""
+
+    def test_skill_requires_constraint_classification(self):
+        content = SKILL_FILE.read_text(encoding="utf-8")
+        self.assertIn("Constraint Classification", content)
+        self.assertIn("Hard constraints", content)
+        self.assertIn("Assumptions", content)
+
+    def test_skill_requires_evidence_and_verification_plan(self):
+        content = SKILL_FILE.read_text(encoding="utf-8")
+        self.assertIn("Evidence & Confidence", content)
+        self.assertIn("Verification Plan", content)
+        self.assertIn("Residual Risks", content)
+
+    def test_provenance_registers_exist(self):
+        for name in ["SOURCES.md", "CLAIMS.md"]:
+            self.assertTrue((REFS_DIR / name).is_file(), f"references/{name} must exist")
+
+    def test_matrix_does_not_claim_more_cells_than_a_48_by_48_matrix(self):
+        content = (REFS_DIR / "11-contradiction-matrix.md").read_text(encoding="utf-8")
+        self.assertNotIn("~2,500 cells filled", content)
+        self.assertIn("curated heuristic lookup", content)
+
+    def test_kyc_benchmark_requires_jurisdiction_and_consent_review(self):
+        content = (REFS_DIR / "10-testing-scenarios.md").read_text(encoding="utf-8")
+        self.assertIn("Jurisdiction gate", content)
+        self.assertIn("privacy/consent review", content)
+        self.assertNotIn("100% compliance and fraud protection", content)
+
+
+class TestReleaseTooling(unittest.TestCase):
+    """Verifies that deployed-copy checks are explicit release actions."""
+
+    def test_deployment_sync_script_exists(self):
+        script = ROOT_DIR / "scripts" / "sync-deployment.ps1"
+        self.assertTrue(script.is_file(), "scripts/sync-deployment.ps1 must exist")
+        content = script.read_text(encoding="utf-8")
+        self.assertIn("Check", content)
+        self.assertIn("Apply", content)
+        self.assertIn("TRIZ_DEPLOY_DIR", content)
+
+    @unittest.skipUnless(shutil.which("powershell"), "PowerShell is required for deployment sync test")
+    def test_deployment_sync_apply_creates_a_byte_identical_copy(self):
+        script = ROOT_DIR / "scripts" / "sync-deployment.ps1"
+        with tempfile.TemporaryDirectory(dir=ROOT_DIR) as temporary_root:
+            destination = Path(temporary_root) / "triz-universal"
+            result = subprocess.run(
+                [
+                    "powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(script),
+                    "-Mode", "Apply", "-Destination", str(destination),
+                ],
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(
+                {
+                    p.relative_to(SKILL_DIR): hashlib.sha256(p.read_bytes()).hexdigest()
+                    for p in SKILL_DIR.rglob("*") if p.is_file()
+                },
+                {
+                    p.relative_to(destination): hashlib.sha256(p.read_bytes()).hexdigest()
+                    for p in destination.rglob("*") if p.is_file()
+                },
+            )
+
+
+class TestBehavioralEvaluationAssets(unittest.TestCase):
+    """Keeps the blind-evaluation contract separate from phrase-based linting."""
+
+    def test_evaluation_cases_define_hard_constraints_and_failure_claims(self):
+        cases_path = ROOT_DIR / "evals" / "cases.json"
+        self.assertTrue(cases_path.is_file(), "evals/cases.json must exist")
+        cases = json.loads(cases_path.read_text(encoding="utf-8"))
+        self.assertGreaterEqual(len(cases), 4)
+        for case in cases:
+            self.assertTrue(case["hard_constraints"], f"{case['id']} needs hard constraints")
+            self.assertTrue(case["disallowed_claims"], f"{case['id']} needs prohibited claims")
+            self.assertIn(case["expected_outcome"], {"eliminate", "prove-limit", "managed-tradeoff"})
+
+    def test_evaluation_guide_requires_blinded_expert_review(self):
+        guide = ROOT_DIR / "evals" / "README.md"
+        self.assertTrue(guide.is_file(), "evals/README.md must exist")
+        content = guide.read_text(encoding="utf-8")
+        self.assertIn("blind", content.lower())
+        self.assertIn("expert review", content.lower())
 
 
 class TestAntiRationalizationGuardrails(unittest.TestCase):
@@ -426,6 +530,7 @@ class TestPressureBenchmarksEvaluationHarness(unittest.TestCase):
             )
 
 
+@unittest.skipUnless(CONFIG_SKILL_DIR is not None, "Set TRIZ_DEPLOY_DIR to run deployment checks")
 class TestActiveDeployment(unittest.TestCase):
     """Verifies that the skill is deployed and operational in the active agent config."""
 
@@ -470,19 +575,19 @@ class TestAuditFixes12(unittest.TestCase):
     """Verifies all 12 audit fixes are correctly applied and synchronized."""
 
     def test_fix_1_no_duplicate_deterministic(self):
-        for path in [REFS_DIR / "01-ikr-ideality.md", CONFIG_SKILL_DIR / "references" / "01-ikr-ideality.md"]:
+        for path in skill_paths("references/01-ikr-ideality.md"):
             content = path.read_text(encoding="utf-8")
             self.assertNotIn("deterministic deterministic", content)
             self.assertIn("deterministic state-machine", content)
 
     def test_fix_2_freemium_not_freepaid(self):
-        for path in [REFS_DIR / "05-40-principles-catalog.md", CONFIG_SKILL_DIR / "references" / "05-40-principles-catalog.md"]:
+        for path in skill_paths("references/05-40-principles-catalog.md"):
             content = path.read_text(encoding="utf-8")
             self.assertNotIn("Freepaid", content)
             self.assertIn("Freemium", content)
 
     def test_fix_3_scenario_3_pressures_and_red_baseline(self):
-        for path in [REFS_DIR / "10-testing-scenarios.md", CONFIG_SKILL_DIR / "references" / "10-testing-scenarios.md"]:
+        for path in skill_paths("references/10-testing-scenarios.md"):
             content = path.read_text(encoding="utf-8")
             self.assertIn("## Pressure Scenario 3:", content)
             scen3_part = content.split("## Pressure Scenario 3:")[1].split("## Pressure Scenario 4:")[0]
@@ -491,7 +596,7 @@ class TestAuditFixes12(unittest.TestCase):
             self.assertIn("### Compliant Resolution (GREEN - With `triz-universal`):", scen3_part)
 
     def test_fix_4_operational_modes_section(self):
-        for path in [SKILL_FILE, CONFIG_SKILL_DIR / "SKILL.md"]:
+        for path in skill_paths("SKILL.md"):
             content = path.read_text(encoding="utf-8")
             self.assertIn("## 3. Operational Modes", content)
             self.assertIn("Autonomous Mode", content)
@@ -499,7 +604,7 @@ class TestAuditFixes12(unittest.TestCase):
             self.assertIn("## 4. Output Delivery Template", content)
 
     def test_fix_5_ascii_diagram_steps(self):
-        for path in [REFS_DIR / "04-ariz-lite-algorithm.md", CONFIG_SKILL_DIR / "references" / "04-ariz-lite-algorithm.md"]:
+        for path in skill_paths("references/04-ariz-lite-algorithm.md"):
             content = path.read_text(encoding="utf-8")
             self.assertNotIn("[Phase 1:", content)
             self.assertIn("[Step 1:", content)
@@ -509,7 +614,7 @@ class TestAuditFixes12(unittest.TestCase):
             self.assertIn("[Step 5:", content)
 
     def test_fix_6_separation_operators_order(self):
-        for path in [REFS_DIR / "04-ariz-lite-algorithm.md", CONFIG_SKILL_DIR / "references" / "04-ariz-lite-algorithm.md"]:
+        for path in skill_paths("references/04-ariz-lite-algorithm.md"):
             content = path.read_text(encoding="utf-8")
             idx_space = content.find("Separation in Space")
             idx_time = content.find("Separation in Time")
@@ -521,7 +626,7 @@ class TestAuditFixes12(unittest.TestCase):
             self.assertLess(step4_space, step4_time, "Separation in Space must come before Separation in Time")
 
     def test_fix_7_unified_step_names(self):
-        for path in [REFS_DIR / "04-ariz-lite-algorithm.md", CONFIG_SKILL_DIR / "references" / "04-ariz-lite-algorithm.md"]:
+        for path in skill_paths("references/04-ariz-lite-algorithm.md"):
             content = path.read_text(encoding="utf-8")
             self.assertIn("### Step 1: Mini-Problem & IFR Formulation", content)
             self.assertIn("### Step 2: Sharpening the Physical Contradiction (PC)", content)
@@ -531,28 +636,31 @@ class TestAuditFixes12(unittest.TestCase):
     def test_fix_8_renamed_testing_scenarios_and_links(self):
         self.assertTrue((REFS_DIR / "10-testing-scenarios.md").is_file())
         self.assertFalse((REFS_DIR / "testing-scenarios.md").exists())
-        self.assertTrue((CONFIG_SKILL_DIR / "references" / "10-testing-scenarios.md").is_file())
-        self.assertFalse((CONFIG_SKILL_DIR / "references" / "testing-scenarios.md").exists())
+        if CONFIG_SKILL_DIR is not None:
+            self.assertTrue((CONFIG_SKILL_DIR / "references" / "10-testing-scenarios.md").is_file())
+            self.assertFalse((CONFIG_SKILL_DIR / "references" / "testing-scenarios.md").exists())
 
-        for skill_path in [SKILL_FILE, CONFIG_SKILL_DIR / "SKILL.md"]:
+        for skill_path in skill_paths("SKILL.md"):
             content = skill_path.read_text(encoding="utf-8")
             self.assertIn("references/10-testing-scenarios.md", content)
             self.assertNotIn("references/testing-scenarios.md", content)
 
-        for readme_path in [REFS_DIR / "README.md", CONFIG_SKILL_DIR / "references" / "README.md"]:
+        for readme_path in skill_paths("references/README.md"):
             content = readme_path.read_text(encoding="utf-8")
             self.assertIn("10-testing-scenarios.md", content)
             self.assertNotIn("[testing-scenarios.md", content)
 
     def test_fix_9_escape_valve_irreducible_constraint(self):
-        for path in [SKILL_FILE, CONFIG_SKILL_DIR / "SKILL.md"]:
+        for path in skill_paths("SKILL.md"):
             content = path.read_text(encoding="utf-8")
             self.assertIn("Irreducible Constraints", content)
             self.assertIn("irreducible constraint", content)
-            self.assertIn("CAP, Amdahl, thermodynamics", content)
+            self.assertIn("CAP theorem", content)
+            self.assertIn("Amdahl's law", content)
+            self.assertIn("thermodynamics", content)
 
     def test_fix_10_triggers_triz_russian_english(self):
-        for path in [SKILL_FILE, CONFIG_SKILL_DIR / "SKILL.md"]:
+        for path in skill_paths("SKILL.md"):
             content = path.read_text(encoding="utf-8")
             self.assertRegex(content, r"-\s+TRIZ\b")
             self.assertRegex(content, r"-\s+ТРИЗ\b")
@@ -574,7 +682,7 @@ class TestAuditFixes12(unittest.TestCase):
             ("09-su-field-and-standards.md", "10-testing-scenarios.md"),
         ]
         for curr_file, next_file in chain:
-            for base_dir in [REFS_DIR, CONFIG_SKILL_DIR / "references"]:
+            for base_dir in [path.parent for path in skill_paths("references/README.md")]:
                 content = (base_dir / curr_file).read_text(encoding="utf-8")
                 self.assertIn(
                     next_file,
@@ -605,7 +713,9 @@ class TestV2Features(unittest.TestCase):
     def test_contradiction_matrix_has_lookup_pairs(self):
         content = (REFS_DIR / "11-contradiction-matrix.md").read_text(encoding="utf-8")
         self.assertIn("Top-30 Software Contradiction Pairs", content)
-        self.assertIn("Matrix 2003 vs Classical", content)
+        self.assertIn("Curated Contradiction Lookup", content)
+        self.assertIn("Relationship to Classical and 2003 Matrices", content)
+        self.assertIn("not a complete reproduction", content)
 
     def test_evaluation_suite_has_5_problems(self):
         content = (REFS_DIR / "12-evaluation-suite.md").read_text(encoding="utf-8")

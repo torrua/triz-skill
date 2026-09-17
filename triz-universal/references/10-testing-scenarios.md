@@ -116,21 +116,27 @@ To ensure that the `triz-universal` skill forces genuine inventive problem solvi
 ### Pressures Applied:
 - **Conflicting Executive Demands:** Product Head vs Chief Compliance Officer deadlock.
 - **Business Impact:** 42% funnel abandonment vs existential regulatory fines.
+- **Jurisdiction gate:** Verify the applicable KYC/AML rules, licensing scope, and when verification must complete before offering each product action.
+- **Privacy/consent review:** Confirm the lawful basis, disclosure, retention, and vendor terms before collecting device, SIM, or IP-derived signals.
 
 ### Baseline Failure (RED - Without Skill):
 - **Agent Rationalization:** *"We should compromise: shorten the form to 3 steps, accept a slightly higher fraud rate, and hire a manual review team to follow up with users later."*
 - **Verdict:** **FAIL.** Classic compromise: still causes funnel friction while introducing fraud vulnerability and recurring labor costs.
 
 ### Compliant Resolution (GREEN - With `triz-universal`):
-- **Physical Contradiction:** "The identity verification must be exhaustively rigorous (to eliminate fraud and satisfy regulators) and must NOT be present (to achieve zero user friction and 100% signup conversion)."
+- **Constraint Classification:** KYC completion before regulated money movement is a hard, jurisdiction-dependent constraint. Signup conversion is a soft business target; device telemetry is an assumption until cost, consent, and availability are verified.
+- **Physical Contradiction:** "The identity verification must be sufficiently rigorous before a regulated action and must NOT require exhaustive identity evidence during an approved unregulated product-exploration step."
 - **Separation Principle Applied:** Separation in Time & Condition (Progressive Frictionless Compliance).
-- **Resource Mobilization (VPR):** Inherent telemetry (device hardware fingerprint, SIM card tenure via telco API, IP ASN reputation) verifying risk silently in background ($0.00 cost).
+- **Resource Mobilization (VPR):** Existing first-party account and session signals may support risk triage only after the privacy/consent review. SIM tenure, device fingerprinting, and IP reputation are external/vendor-dependent resources, not assumed to be free.
 - **Resolution:**
-  1. Signup is instantaneous: phone number + passkey only (0 seconds, 0 friction, conversion jumps by 40%+).
-  2. The user is placed in a sandboxed, low-risk ledger (Separation in Space): can explore, customize, and receive funds.
-  3. Latent VPR Mobilization verifies risk silently in the background ($0.00 cost).
-  4. Full KYC verification is triggered dynamically *only when the user initiates an outbound withdrawal or exceeds a $500 transfer limit* (Separation by Condition and Time).
-- **Verdict:** **PASS.** Zero conversion friction at top-of-funnel; 100% compliance and fraud protection at money-out.
+  1. Permit only a jurisdiction-approved, non-regulated exploration state before verification; do not promise a specific signup duration or conversion lift.
+  2. Keep funds and regulated transfers unavailable until the jurisdiction gate is satisfied (Separation in Space and Condition).
+  3. Use approved first-party signals to prioritize review, with documented consent, vendor cost, false-positive handling, and human escalation.
+  4. Trigger the required KYC level before the applicable regulated threshold or action, as defined by compliance counsel rather than a universal $500 rule.
+- **Evidence & Confidence:** Pattern; legal obligations and vendor capability require jurisdictional verification.
+- **Verification Plan:** Compliance approves the state machine; privacy approves the signal inventory; a controlled experiment measures completion rate, fraud loss, false positives, and review time.
+- **Residual Risks:** Regulations, provider availability, privacy obligations, and adversarial fraud patterns can change.
+- **Verdict:** **PASS only if** the jurisdiction gate, privacy/consent review, and operational controls are validated before release.
 
 ---
 

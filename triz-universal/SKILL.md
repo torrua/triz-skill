@@ -26,7 +26,7 @@ metadata:
 
 # Universal TRIZ: Non-Compromising Inventive Problem Solving
 
-> **Core Axiom:** A compromise is an admission of failure. A true inventive solution eliminates the contradiction so that Parameter $A$ improves without Parameter $B$ deteriorating, using only existing system resources (ВПР).
+> **Core Axiom:** First seek an inventive resolution that improves Parameter $A$ without degrading Parameter $B$. If a hard physical, legal, budgetary, or contractual limit prevents that outcome, state the limit and its evidence rather than inventing a guarantee.
 
 ---
 
@@ -36,11 +36,11 @@ LLMs naturally gravitate toward compromise and middle-ground solutions due to RL
 
 | LLM Rationalization | Dialectical Reality & Mandatory Rule |
 |---|---|
-| *"In real-world engineering, trade-offs are inevitable."* | **FORBIDDEN.** A trade-off means you gave up before finding the Physical Contradiction. Eliminate the contradiction. |
-| *"I'll just add Redis / Kafka / a new service / extra staff to fix this."* | **VIOLATION OF IFR.** Adding infrastructure increases complexity and cost. Use resources already present (VPR). |
-| *"I will offer a balanced middle-ground solution."* | **UNACCEPTABLE.** Middle grounds leave both sides dissatisfied. Sharpen the contradiction to its extreme limit. |
-| *"Let's ask the user which constraint they want to drop."* | **FORBIDDEN.** The user invoked TRIZ because both constraints are mandatory. Resolve both. |
-| *"I am following TRIZ in spirit by brainstorming."* | **VIOLATION.** Violating the letter is violating the spirit. Follow the 5-step ARIZ-AI pipeline. |
+| *"In real-world engineering, trade-offs are inevitable."* | **INCOMPLETE.** First formulate the Physical Contradiction and test whether it can be eliminated. If not, identify the irreducible limit and the evidence. |
+| *"I'll just add Redis / Kafka / a new service / extra staff to fix this."* | **VIOLATION OF IFR unless disclosed.** Explore existing resources first; an added component is allowed only with its cost, complexity, and new risks stated. |
+| *"I will offer a balanced middle-ground solution."* | **UNACCEPTABLE without diagnosis.** Do not offer a compromise before testing separation, bypass, and hard limits. |
+| *"Let's ask the user which constraint they want to drop."* | **FORBIDDEN for hard constraints.** Clarify ambiguous assumptions and soft constraints; never silently discard a stated hard constraint. |
+| *"I am following TRIZ in spirit by brainstorming."* | **VIOLATION.** Follow the 5-step ARIZ-AI pipeline and make the mechanism testable. |
 
 ### 🚨 Red Flags — STOP and Restart
 If your output contains:
@@ -49,10 +49,18 @@ If your output contains:
 3. *"Accepting a slight performance hit in exchange for..."*
 4. *"The user must decide which constraint matters more..."*
 
-**ACTION:** Delete the proposed solution immediately. Return to Step 2 and sharpen the Physical Contradiction.
+**ACTION:** Return to Step 2, classify the constraint, and either find a resolution or explicitly justify the remaining trade-off.
+
+### Constraint Classification (Mandatory)
+Before the pipeline, list each requirement as one of:
+- **Hard constraints:** laws, safety invariants, contractual/SLA limits, or a measured fixed budget. Never silently relax these.
+- **Soft constraints:** preferences or targets that may be optimized only with the user's explicit authorization.
+- **Assumptions:** unverified facts, costs, capabilities, or demand estimates. Ask for evidence or mark the result conditional.
+
+There are three valid outcomes: **eliminate the contradiction**, **prove an irreducible limit**, or **propose a managed trade-off explicitly authorized by the user**. Treat IFR as a search direction, not a promise that every target is attainable.
 
 ### ⚖️ Irreducible Constraints (Escape Valve)
-Если после 3 итераций ARIZ-AI противоречие остаётся неразрешимым из-за фундаментального физического закона (CAP, Amdahl, thermodynamics) — явно объявить irreducible constraint и предложить решение с максимальной идеальностью в рамках данного закона.
+If after 3 ARIZ-AI iterations the contradiction remains unresolvable due to a fundamental physical law (CAP theorem, Amdahl's law, thermodynamics) — explicitly declare an irreducible constraint and propose a solution with maximum ideality within the bounds of that law.
 
 ---
 
@@ -66,8 +74,8 @@ When invoked, execute this 5-step loop:
 [Step 5: Verification] ◄─ [Step 4: Separation Operators] ◄─┘
 ```
 
-### Step 1: Mini-Problem & Ideal Final Result (IFR / ИКР)
-- Define the system boundary. **Forbidden:** Introducing new complex entities or external paid services.
+### Step 1: Mini-Problem & Ideal Final Result (IFR)
+- Define the system boundary and the hard constraints. Prefer existing resources; do not label an external API, paid service, privileged access, or user data as free.
 - State the IFR:
   > *"The element [X] itself (or an existing resource/waste), at zero additional cost and zero added complexity, performs [Function 1] while preventing [Harm 2]."*
 
@@ -78,8 +86,8 @@ $$\mathbf{\text{AND}}$$
 $$\mathbf{\text{Element } X \text{ must have property } [\neg P] \text{ to satisfy } [R_2]}$$
 *(e.g., "The cache must exist to guarantee 1ms latency, AND the cache must NOT exist to avoid memory overhead and stale data.")*
 
-### Step 3: Substance-Field Resource Audit (ВПР)
-Identify latent, free resources in the Operational Zone (OZ) and Operational Time (OT):
+### Step 3: Substance-Field Resource Audit (VPR)
+Identify latent resources in the Operational Zone (OZ) and Operational Time (OT). A resource qualifies as VPR only when it is available within the boundary, legally usable, reliable enough for the requirement, and its incremental cost is known or explicitly unknown:
 - **Temporal:** Idle CPU cycles, network round-trip wait intervals, off-peak periods.
 - **Spatial:** Struct padding bytes, unused bitflags, cache lines, cold storage.
 - **Informational:** Natural data sorting, deterministic hashing, idempotency keys, write-read asymmetry.
@@ -109,10 +117,11 @@ If classical separation fails, try:
 
 ### Step 5: Verification & Secondary Harm Audit
 Verify the resolution against the **Inventive Quality Checklist**:
-- [ ] Did Parameter $A$ improve significantly?
-- [ ] Did Parameter $B$ remain completely unimpaired (zero degradation)?
-- [ ] Were zero expensive external dependencies added?
-- [ ] System Operator Check: Does the solution create technical debt in the future or break the supersystem?
+- [ ] Did Parameter $A$ meet a stated measurable target and baseline?
+- [ ] Did Parameter $B$ remain within its stated hard limit? If not, was the trade-off authorized?
+- [ ] Were new dependencies, operating costs, privacy effects, and legal obligations disclosed?
+- [ ] Is every safety, security, performance, and compliance claim backed by evidence or marked as a hypothesis?
+- [ ] System Operator Check: Does the solution create technical debt or harm the supersystem?
 
 ---
 
@@ -137,7 +146,10 @@ When delivering a TRIZ-derived solution, append this concise verification block:
 - **Inventive Principle(s) Used:** [Principle #N: Name — and WHY it was selected for this specific contradiction]
 - **Resource Mobilized (VPR):** [Zero-cost internal/supersystem resource used]
 - **Resolution:** [How the contradiction was resolved without compromise]
-- **Verified Outcome:** [Parameter A improved with 0% degradation of Parameter B]
+- **Evidence & Confidence:** [Established fact | Pattern | Hypothesis; source or reason]
+- **Verification Plan:** [Baseline, experiment, success threshold, and owner]
+- **Residual Risks:** [Irreducible limits, privacy, compliance, cost, and failure modes]
+- **Verified Outcome:** [Measured outcome, or conditional expected outcome]
 ```
 
 ---
@@ -159,3 +171,4 @@ When delivering a TRIZ-derived solution, append this concise verification block:
 | **Need deterministic contradiction matrix lookup** | See [references/11-contradiction-matrix.md](references/11-contradiction-matrix.md) |
 | **Self-evaluating TRIZ compliance with reference solutions** | See [references/12-evaluation-suite.md](references/12-evaluation-suite.md) |
 | **Resolving organizational / people-centric contradictions** | See [references/13-perception-mapping.md](references/13-perception-mapping.md) |
+| **Checking sources, claim scope, and confidence** | See [references/SOURCES.md](references/SOURCES.md) and [references/CLAIMS.md](references/CLAIMS.md) |
