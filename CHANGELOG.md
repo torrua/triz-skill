@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.1.1
+
+- Added canonical Russian language support: bilingual triggers, language adaptation directive, localized delivery template, and bilingual 40 inventive principles catalog.
+
 ## 2.1.0
 
 - Added constraint classification, evidence levels, verification plans, and residual-risk reporting.

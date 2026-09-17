@@ -11,6 +11,15 @@ metadata:
     - ТРИЗ
     - trade-off
     - contradiction
+    - противоречие
+    - физическое противоречие
+    - техническое противоречие
+    - идеальный конечный результат
+    - ИКР
+    - ВПР
+    - АРИЗ
+    - неразрешимый компромисс
+    - архитектурный тупик
     - bottleneck
     - conflicting requirements
     - latency vs memory
@@ -136,8 +145,12 @@ The skill functions in three execution modes depending on user intent:
 
 ## 4. Output Delivery Template
 
-When delivering a TRIZ-derived solution, append this concise verification block:
+### Language Adaptation
+Always formulate your reasoning, diagnostic path, and final resolution in the language of the user's prompt (e.g., Russian, English).
+- When responding in Russian, use canonical Russian TRIZ terminology: **ИКР** (Ideal Final Result), **ВПР** (Substance-Field Resources), **ФП** (Physical Contradiction), **ТП** (Technical Contradiction), 4 принципа разделения (в пространстве, во времени, по состоянию, по структуре), и 40 приемов Альтшуллера.
+- Append the corresponding localized verification block:
 
+#### English Delivery Template:
 ```markdown
 ### 💡 TRIZ Inventive Resolution
 - **Physical Contradiction:** [Element X had to be P for R1, and NOT-P for R2]
@@ -150,6 +163,21 @@ When delivering a TRIZ-derived solution, append this concise verification block:
 - **Verification Plan:** [Baseline, experiment, success threshold, and owner]
 - **Residual Risks:** [Irreducible limits, privacy, compliance, cost, and failure modes]
 - **Verified Outcome:** [Measured outcome, or conditional expected outcome]
+```
+
+#### Шаблон вывода на русском языке:
+```markdown
+### 💡 ТРИЗ-Изобретательское Решение
+- **Физическое противоречие (ФП):** [Элемент X должен обладать свойством P для R1, и НЕ-P для R2]
+- **Диагностический путь:** [ГДЕ / КОГДА / ПО СОСТОЯНИЮ / СТРУКТУРА / СОВМЕЩЕНИЕ / ОБХОД / АЛЬТ-СИСТЕМА]
+- **Примененная стратегия:** [В пространстве | Во времени | По состоянию | По структуре | Совмещение | Обход | Альтернативная система]
+- **Использованный прием(ы):** [Прием №N: Каноническое русское название — и ПОЧЕМУ выбран]
+- **Мобилизованный ресурс (ВПР):** [Использованный бесплатный внутренний/надсистемный ресурс]
+- **Решение:** [Суть механизма устранения противоречия без компромисса]
+- **Доказательная база и уверенность:** [Факт | Паттерн | Гипотеза; источник или обоснование]
+- **План верификации:** [Базовая линия, эксперимент, порог успеха и ответственный]
+- **Остаточные риски:** [Неустранимые пределы, приватность, комплаенс, стоимость и сбои]
+- **Проверенный результат:** [Измеренный результат или ожидаемый эффект]
 ```
 
 ---

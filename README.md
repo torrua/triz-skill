@@ -24,6 +24,7 @@ An AI agent skill that applies **TRIZ (Теория Решения Изобре�
 | 🗺️ **Perception Mapping** | Business TRIZ for organizational contradictions and stakeholder conflicts |
 | ⚖️ **Escape Valve** | Honest handling of irreducible constraints (CAP, Amdahl, thermodynamics) |
 | 🎯 **Three Modes** | Autonomous (default), Semi-Automatic, and Socratic (interactive) |
+| 🇷🇺 **Bilingual (EN / RU)** | Canonical Altshuller Russian terminology, bilingual triggers, localized template |
 | 🔍 **Evidence & Risk Traceability** | Output records confidence, validation plan, and residual risks |
 | 📝 **Evaluation Assets** | Reference problems plus blind expert-review cases |
 | ✅ **Portable Validation** | Source checks run locally; deployment parity is an explicit release check |

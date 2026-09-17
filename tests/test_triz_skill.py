@@ -791,5 +791,65 @@ class TestV2Features(unittest.TestCase):
         self.assertIn("Comparison:", content)
 
 
+class TestMultilingualRussianSupport(unittest.TestCase):
+    """Verifies that Russian language triggers, terminology, and templates are supported."""
+
+    def test_russian_triggers_present_in_skill(self):
+        content = SKILL_FILE.read_text(encoding="utf-8")
+        meta, _ = parse_frontmatter(content)
+        triggers = meta.get("triggers", [])
+        for expected in [
+            "ТРИЗ",
+            "противоречие",
+            "физическое противоречие",
+            "техническое противоречие",
+            "идеальный конечный результат",
+            "ИКР",
+            "ВПР",
+            "АРИЗ",
+            "неразрешимый компромисс",
+            "архитектурный тупик",
+        ]:
+            self.assertIn(expected, triggers, f"Trigger '{expected}' missing from SKILL.md frontmatter")
+
+    def test_russian_output_template_present(self):
+        content = SKILL_FILE.read_text(encoding="utf-8")
+        self.assertIn("Шаблон вывода на русском языке", content)
+        self.assertIn("### 💡 ТРИЗ-Изобретательское Решение", content)
+        self.assertIn("- **Физическое противоречие (ФП):**", content)
+        self.assertIn("- **Диагностический путь:**", content)
+        self.assertIn("- **Примененная стратегия:**", content)
+        self.assertIn("- **Использованный прием(ы):**", content)
+        self.assertIn("- **Мобилизованный ресурс (ВПР):**", content)
+        self.assertIn("- **Решение:**", content)
+        self.assertIn("- **Доказательная база и уверенность:**", content)
+        self.assertIn("- **План верификации:**", content)
+        self.assertIn("- **Остаточные риски:**", content)
+        self.assertIn("- **Проверенный результат:**", content)
+
+    def test_all_40_principles_have_canonical_russian_names(self):
+        catalog = (REFS_DIR / "05-40-principles-catalog.md").read_text(encoding="utf-8")
+        canonical_ru_names = [
+            "Дробление", "Вынесение", "Местное качество", "Асимметрия", "Объединение",
+            "Универсальность", "«Матрешка»", "Антивес", "Предварительное антидействие",
+            "Предварительное действие", "«Заранее подложенная подушка»", "Эквипотенциальность",
+            "«Наоборот»", "Сфероидальность — кривизна", "Динамичность",
+            "Частичное или избыточное действие", "Переход в другое измерение",
+            "Использование механических колебаний", "Периодическое действие",
+            "Непрерывность полезного действия", "Проскок", "«Обратить вред в пользу»",
+            "Обратная связь", "«Посредник»", "Самообслуживание", "Копирование",
+            "Дешевая недолговечность взамен долговечности", "Замена механической схемы",
+            "Использование пневмо- и гидроконструкций", "Использование гибких оболочек и тонких пленок",
+            "Применение пористых материалов", "Изменение окраски", "Однородность",
+            "Отброс и регенерация частей", "Изменение параметров объекта",
+            "Применение фазовых переходов", "Применение теплового расширения",
+            "Применение сильных окислителей", "Применение инертной среды",
+            "Применение композиционных материалов",
+        ]
+        for name in canonical_ru_names:
+            self.assertIn(name, catalog, f"Canonical Russian principle name '{name}' missing from catalog")
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+
