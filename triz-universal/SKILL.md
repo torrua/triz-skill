@@ -30,23 +30,6 @@ metadata:
 
 ---
 
-## ⚡ Quick Decision Tree
-
-| Situation / Need | Action & Reference |
-|---|---|
-| **Stuck in a trade-off, deadlock, or conflicting constraints** | Run **ARIZ-AI** (Section 2 below) or see [references/04-ariz-lite-algorithm.md](references/04-ariz-lite-algorithm.md) |
-| **Need to formulate the Ideal Final Result (zero added cost)** | See [references/01-ikr-ideality.md](references/01-ikr-ideality.md) |
-| **Need to sharpen a vague conflict into a Physical Contradiction** | See [references/02-contradictions.md](references/02-contradictions.md) |
-| **Have a Physical Contradiction, need separation heuristics** | See [references/03-separation-principles.md](references/03-separation-principles.md) |
-| **Need creative principle inspiration mapped across domains** | See [references/05-40-principles-catalog.md](references/05-40-principles-catalog.md) |
-| **Need to evaluate supersystem risks or future tech debt** | See [references/06-system-operator-9screens.md](references/06-system-operator-9screens.md) |
-| **Need to locate hidden "free" resources in system or code** | See [references/07-resource-audit-vpr.md](references/07-resource-audit-vpr.md) |
-| **Applying TRIZ to AI Agents, Business Strategy, or Hardware** | See [references/08-multi-domain-lenses.md](references/08-multi-domain-lenses.md) |
-| **Dealing with harmful, deficient, or uncontrollable interactions** | See [references/09-su-field-and-standards.md](references/09-su-field-and-standards.md) |
-| **Running pressure verification benchmarks (RED vs GREEN)** | See [references/10-testing-scenarios.md](references/10-testing-scenarios.md) |
-
----
-
 ## 1. Anti-Rationalization Guardrails (Compromise Prevention)
 
 LLMs naturally gravitate toward compromise and middle-ground solutions due to RLHF conditioning. The table below intercepts standard rationalizations:
@@ -103,14 +86,26 @@ Identify latent, free resources in the Operational Zone (OZ) and Operational Tim
 - **System Waste:** Discarded error traces, backpressure watermarks, young-gen GC sweeps.
 - **Supersystem / Environment:** OS kernel (`io_uring`, `sendfile`), client device compute, ambient fields.
 
-### Step 4: Apply the 4 Separation Operators
-Select the applicable separation heuristic:
-1. **Separation in Space:** Element is $P$ in Zone 1, and $\neg P$ in Zone 2 (e.g., sharding, CQRS, memory zoning).
-2. **Separation in Time:** Element is $P$ during Time 1, and $\neg P$ during Time 2 (e.g., pre-computation, MVCC snapshots, batching).
-3. **Separation by Condition:** Element is $P$ under Condition $C_1$, and $\neg P$ under Condition $C_2$ (e.g., adaptive caching, circuit breakers).
-4. **Separation by Structure (System Transition):** Subsystems have property $P$; the supersystem possesses emergent property $\neg P$ (e.g., actor models, divide-and-conquer, quorum consensus).
+### Step 4: Apply Resolution Strategies (7 options)
 
-*(If stuck, cross-reference [references/05-40-principles-catalog.md](references/05-40-principles-catalog.md) or [references/09-su-field-and-standards.md](references/09-su-field-and-standards.md)).*
+**First, run Diagnostic Questions** (Zlotin/Zusman) to narrow the search:
+- **WHERE** must $X$ be $P$ and $\neg P$? → **Space**
+- **WHEN?** → **Time**
+- **UNDER WHAT CONDITION?** → **Condition**
+- **Parts vs Whole?** → **Structure**
+
+Then apply the matching strategy:
+1. **Separation in Space:** $P$ in Zone 1, $\neg P$ in Zone 2 (CQRS, sharding, memory zoning).
+2. **Separation in Time:** $P$ during $T_1$, $\neg P$ during $T_2$ (MVCC, pre-computation, batching).
+3. **Separation by Condition:** $P$ under $C_1$, $\neg P$ under $C_2$ (circuit breakers, feature flags, adaptive routing).
+4. **Separation by Structure:** Subsystems have $P$, supersystem has $\neg P$ (actor models, consensus clusters).
+
+If classical separation fails, try:
+5. **Satisfy:** Find one resource that delivers BOTH $P$ and $\neg P$ simultaneously (memory-mapped files, passkeys).
+6. **Bypass:** Reformulate the problem so the contradiction vanishes ("Do we need X at all?").
+7. **Alternative System:** Replace the system entirely with one that lacks this contradiction.
+
+*(Cross-reference [references/03-separation-principles.md](references/03-separation-principles.md) for diagnostic questions, recommended principles per strategy, and multi-domain examples. For matrix lookup: [references/11-contradiction-matrix.md](references/11-contradiction-matrix.md).)*
 
 ### Step 5: Verification & Secondary Harm Audit
 Verify the resolution against the **Inventive Quality Checklist**:
@@ -123,8 +118,9 @@ Verify the resolution against the **Inventive Quality Checklist**:
 
 ## 3. Operational Modes
 
-The skill functions in two execution modes depending on user intent:
+The skill functions in three execution modes depending on user intent:
 - **Autonomous Mode (Default):** Silently executes the 5-step ARIZ-AI pipeline, sharpens the physical contradiction, mobilizes latent resources (VPR), and directly delivers the non-compromising resolution and verification template.
+- **Semi-Automatic Mode:** Asks 4 key diagnostic questions (What is the system? What is the conflict? What parameters matter? What resources are available?), then generates the full ARIZ-AI resolution. Best when the user provides partial context.
 - **Socratic Mode:** Interactively guides the user step-by-step through the ARIZ-AI stages (Mini-Problem → Physical Contradiction → VPR Audit → Separation Operators → Verification), prompting for feedback at each milestone before proceeding.
 
 ---
@@ -136,8 +132,30 @@ When delivering a TRIZ-derived solution, append this concise verification block:
 ```markdown
 ### 💡 TRIZ Inventive Resolution
 - **Physical Contradiction:** [Element X had to be P for R1, and NOT-P for R2]
-- **Separation Principle Applied:** [Space | Time | Condition | Structure]
+- **Diagnostic Path:** [Which question led to strategy selection: WHERE/WHEN/CONDITION/STRUCTURE/SATISFY/BYPASS/ALT]
+- **Strategy Applied:** [Space | Time | Condition | Structure | Satisfy | Bypass | Alternative System]
+- **Inventive Principle(s) Used:** [Principle #N: Name — and WHY it was selected for this specific contradiction]
 - **Resource Mobilized (VPR):** [Zero-cost internal/supersystem resource used]
 - **Resolution:** [How the contradiction was resolved without compromise]
 - **Verified Outcome:** [Parameter A improved with 0% degradation of Parameter B]
 ```
+
+---
+
+## 5. Quick Decision Tree (Extended)
+
+| Situation / Need | Action & Reference |
+|---|---|
+| **Stuck in a trade-off, deadlock, or conflicting constraints** | Run **ARIZ-AI** (Section 2 above) or see [references/04-ariz-lite-algorithm.md](references/04-ariz-lite-algorithm.md) |
+| **Need to formulate the Ideal Final Result (zero added cost)** | See [references/01-ikr-ideality.md](references/01-ikr-ideality.md) |
+| **Need to sharpen a vague conflict into a Physical Contradiction** | See [references/02-contradictions.md](references/02-contradictions.md) |
+| **Have a Physical Contradiction, need resolution strategies** | See [references/03-separation-principles.md](references/03-separation-principles.md) |
+| **Need creative principle inspiration mapped across domains** | See [references/05-40-principles-catalog.md](references/05-40-principles-catalog.md) |
+| **Need to evaluate supersystem risks or future tech debt** | See [references/06-system-operator-9screens.md](references/06-system-operator-9screens.md) |
+| **Need to locate hidden "free" resources in system or code** | See [references/07-resource-audit-vpr.md](references/07-resource-audit-vpr.md) |
+| **Applying TRIZ to AI Agents, Business Strategy, or Hardware** | See [references/08-multi-domain-lenses.md](references/08-multi-domain-lenses.md) |
+| **Dealing with harmful, deficient, or uncontrollable interactions** | See [references/09-su-field-and-standards.md](references/09-su-field-and-standards.md) |
+| **Running pressure verification benchmarks (RED vs GREEN)** | See [references/10-testing-scenarios.md](references/10-testing-scenarios.md) |
+| **Need deterministic contradiction matrix lookup** | See [references/11-contradiction-matrix.md](references/11-contradiction-matrix.md) |
+| **Self-evaluating TRIZ compliance with reference solutions** | See [references/12-evaluation-suite.md](references/12-evaluation-suite.md) |
+| **Resolving organizational / people-centric contradictions** | See [references/13-perception-mapping.md](references/13-perception-mapping.md) |

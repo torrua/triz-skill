@@ -176,7 +176,7 @@ class TestArizAiPipelineFormulation(unittest.TestCase):
         self.assertIn("Step 1: Mini-Problem & Ideal Final Result", content)
         self.assertIn("Step 2: Sharpen the Physical Contradiction", content)
         self.assertIn("Step 3: Substance-Field Resource Audit", content)
-        self.assertIn("Step 4: Apply the 4 Separation Operators", content)
+        self.assertIn("Step 4: Apply Resolution Strategies", content)
         self.assertIn("Step 5: Verification & Secondary Harm Audit", content)
 
     def test_canonical_physical_contradiction_syntax(self):
@@ -196,7 +196,9 @@ class TestArizAiPipelineFormulation(unittest.TestCase):
         self.assertIn("Output Delivery Template", content)
         self.assertIn("### 💡 TRIZ Inventive Resolution", content)
         self.assertIn("- **Physical Contradiction:**", content)
-        self.assertIn("- **Separation Principle Applied:**", content)
+        self.assertIn("- **Strategy Applied:**", content)
+        self.assertIn("- **Diagnostic Path:**", content)
+        self.assertIn("- **Inventive Principle(s) Used:**", content)
         self.assertIn("- **Resource Mobilized (VPR):**", content)
 
 
@@ -524,7 +526,7 @@ class TestAuditFixes12(unittest.TestCase):
             self.assertIn("### Step 1: Mini-Problem & IFR Formulation", content)
             self.assertIn("### Step 2: Sharpening the Physical Contradiction (PC)", content)
             self.assertIn("### Step 3: Substance-Field Resource Audit (ВПР)", content)
-            self.assertIn("### Step 4: Apply the 4 Separation Operators", content)
+            self.assertIn("### Step 4: Apply", content)  # Step 4 name (v1: 4 Separation Operators, v2: Resolution Strategies)
 
     def test_fix_8_renamed_testing_scenarios_and_links(self):
         self.assertTrue((REFS_DIR / "10-testing-scenarios.md").is_file())
@@ -581,6 +583,103 @@ class TestAuditFixes12(unittest.TestCase):
                 )
 
 
+class TestV2Features(unittest.TestCase):
+    """Tests for v2.0.0 features: new files, strategies, modes, and traceability."""
+
+    def test_new_reference_files_exist(self):
+        for name in ["11-contradiction-matrix.md", "12-evaluation-suite.md", "13-perception-mapping.md"]:
+            self.assertTrue(
+                (REFS_DIR / name).is_file(),
+                f"New reference file {name} missing from references/",
+            )
+
+    def test_contradiction_matrix_has_39_parameters(self):
+        content = (REFS_DIR / "11-contradiction-matrix.md").read_text(encoding="utf-8")
+        self.assertIn("39 TRIZ Parameters", content)
+        self.assertIn("Software / AI Equivalent", content)
+        self.assertIn("Business Equivalent", content)
+        # Should have all 39 rows
+        for i in range(1, 40):
+            self.assertIn(f"| {i} |", content, f"Parameter {i} missing from matrix")
+
+    def test_contradiction_matrix_has_lookup_pairs(self):
+        content = (REFS_DIR / "11-contradiction-matrix.md").read_text(encoding="utf-8")
+        self.assertIn("Top-30 Software Contradiction Pairs", content)
+        self.assertIn("Matrix 2003 vs Classical", content)
+
+    def test_evaluation_suite_has_5_problems(self):
+        content = (REFS_DIR / "12-evaluation-suite.md").read_text(encoding="utf-8")
+        for i in range(1, 6):
+            self.assertIn(f"## Problem {i}:", content)
+        self.assertIn("Scoring Criteria", content)
+        self.assertIn("Aggregate Scoring", content)
+
+    def test_perception_mapping_has_5_stages(self):
+        content = (REFS_DIR / "13-perception-mapping.md").read_text(encoding="utf-8")
+        self.assertIn("Stage 1: Gather", content)
+        self.assertIn("Stage 2: Link", content)
+        self.assertIn("Stage 3: Conflict", content) 
+        self.assertIn("Stage 4: Leverage", content)
+        self.assertIn("Stage 5: Resolve", content)
+        self.assertIn("Leads-To", content)
+
+    def test_seven_strategies_in_separation_principles(self):
+        content = (REFS_DIR / "03-separation-principles.md").read_text(encoding="utf-8")
+        for section in [
+            "Separation in Space", "Separation in Time",
+            "Separation by Condition", "Separation by Structure",
+            "5. Satisfy", "6. Bypass", "7. Alternative System",
+        ]:
+            self.assertIn(section, content, f"Strategy '{section}' missing")
+
+    def test_diagnostic_questions_present(self):
+        content = (REFS_DIR / "03-separation-principles.md").read_text(encoding="utf-8")
+        self.assertIn("Diagnostic Questions (Zlotin/Zusman", content)
+        self.assertIn("**WHERE**", content)
+        self.assertIn("**WHEN**", content)
+        self.assertIn("**UNDER WHAT CONDITION**", content)
+
+    def test_recommended_principles_per_strategy(self):
+        content = (REFS_DIR / "03-separation-principles.md").read_text(encoding="utf-8")
+        self.assertIn("Recommended Inventive Principles per Strategy", content)
+        self.assertIn("Segmentation", content)
+        self.assertIn("Preliminary Action", content)
+
+    def test_skill_md_has_seven_strategies(self):
+        content = SKILL_FILE.read_text(encoding="utf-8")
+        self.assertIn("5. **Satisfy:**", content)
+        self.assertIn("6. **Bypass:**", content)
+        self.assertIn("7. **Alternative System:**", content)
+
+    def test_semi_automatic_mode(self):
+        content = SKILL_FILE.read_text(encoding="utf-8")
+        self.assertIn("Semi-Automatic Mode", content)
+        self.assertIn("three execution modes", content)
+
+    def test_reasoning_trace_in_output_template(self):
+        content = SKILL_FILE.read_text(encoding="utf-8")
+        self.assertIn("Diagnostic Path", content)
+        self.assertIn("Inventive Principle(s) Used", content)
+        self.assertIn("WHY it was selected", content)
+
+    def test_extended_decision_tree(self):
+        content = SKILL_FILE.read_text(encoding="utf-8")
+        self.assertIn("11-contradiction-matrix.md", content)
+        self.assertIn("12-evaluation-suite.md", content)
+        self.assertIn("13-perception-mapping.md", content)
+
+    def test_references_readme_lists_all_13_files(self):
+        content = (REFS_DIR / "README.md").read_text(encoding="utf-8")
+        for i in range(1, 14):
+            prefix = f"{i:02d}-" if i <= 9 else f"{i}-"
+            self.assertIn(prefix, content, f"Reference {prefix}* missing from README index")
+
+    def test_litvin_vs_zlotin_comparison(self):
+        content = (REFS_DIR / "03-separation-principles.md").read_text(encoding="utf-8")
+        self.assertIn("Litvin", content)
+        self.assertIn("Zlotin/Zusman", content)
+        self.assertIn("Comparison:", content)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
-
