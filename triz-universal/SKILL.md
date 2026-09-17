@@ -199,4 +199,10 @@ Always formulate your reasoning, diagnostic path, and final resolution in the la
 | **Need deterministic contradiction matrix lookup** | See [references/11-contradiction-matrix.md](references/11-contradiction-matrix.md) |
 | **Self-evaluating TRIZ compliance with reference solutions** | See [references/12-evaluation-suite.md](references/12-evaluation-suite.md) |
 | **Resolving organizational / people-centric contradictions** | See [references/13-perception-mapping.md](references/13-perception-mapping.md) |
+| **Deep Level 4-5 deadlock or canonical ARIZ-85-V required** | See [references/ariz-deep/01a-ariz-85v-analysis.md](references/ariz-deep/01a-ariz-85v-analysis.md) & [01b-ariz-85v-resolution.md](references/ariz-deep/01b-ariz-85v-resolution.md) |
+| **Micro-level conflict, concurrency races, or agent role-prompting** | Run MMC: [references/ariz-deep/02-mmc-operator-protocol.md](references/ariz-deep/02-mmc-operator-protocol.md) |
+| **Synthesizing deployment, assembly, zero-downtime, or cold start** | See [references/ariz-deep/03-step-back-from-ifr.md](references/ariz-deep/03-step-back-from-ifr.md) |
+| **Deterministic decision tree for physical contradictions (Table 2)** | See [references/ariz-deep/04-physical-contradiction-tree.md](references/ariz-deep/04-physical-contradiction-tree.md) |
+| **Pruning architectural bloat, queues, microservices without loss** | Run Trimming: [references/ariz-deep/05-trimming-algorithm.md](references/ariz-deep/05-trimming-algorithm.md) |
+| **Stress-testing failure modes and inverted vulnerability search** | Run Subversion Analysis (AFD): [references/ariz-deep/06-subversion-analysis-afd.md](references/ariz-deep/06-subversion-analysis-afd.md) |
 | **Checking sources, claim scope, and confidence** | See [references/SOURCES.md](references/SOURCES.md) and [references/CLAIMS.md](references/CLAIMS.md) |

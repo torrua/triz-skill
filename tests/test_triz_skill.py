@@ -850,6 +850,119 @@ class TestMultilingualRussianSupport(unittest.TestCase):
             self.assertIn(name, catalog, f"Canonical Russian principle name '{name}' missing from catalog")
 
 
+class TestTier3DeepProtocols(unittest.TestCase):
+    """Verifies Tier-3 Deep Algorithmic Protocols (ARIZ-85-V, MMC, Step Back, Table 2, Trimming, AFD)."""
+
+    ARIZ_DEEP_DIR = REFS_DIR / "ariz-deep"
+
+    EXPECTED_PROTOCOLS = [
+        "01a-ariz-85v-analysis.md",
+        "01b-ariz-85v-resolution.md",
+        "02-mmc-operator-protocol.md",
+        "03-step-back-from-ifr.md",
+        "04-physical-contradiction-tree.md",
+        "05-trimming-algorithm.md",
+        "06-subversion-analysis-afd.md",
+    ]
+
+    def test_ariz_deep_directory_and_exact_files_exist(self):
+        self.assertTrue(self.ARIZ_DEEP_DIR.is_dir(), f"Directory {self.ARIZ_DEEP_DIR} must exist")
+        actual_files = sorted([f.name for f in self.ARIZ_DEEP_DIR.glob("*.md")])
+        self.assertEqual(
+            actual_files,
+            sorted(self.EXPECTED_PROTOCOLS),
+            f"Expected exactly 7 protocol files in ariz-deep, got {actual_files}",
+        )
+
+    def test_ariz_deep_frontmatter_and_line_limits(self):
+        for fname in self.EXPECTED_PROTOCOLS:
+            fpath = self.ARIZ_DEEP_DIR / fname
+            self.assertTrue(fpath.is_file(), f"File {fname} must exist")
+            content = fpath.read_text(encoding="utf-8")
+            self.assertTrue(
+                content.startswith("---"),
+                f"Protocol {fname} must start with YAML frontmatter",
+            )
+            self.assertIn(
+                "description:",
+                content,
+                f"Protocol {fname} missing description in frontmatter",
+            )
+            self.assertIn(
+                "metadata:",
+                content,
+                f"Protocol {fname} missing metadata in frontmatter",
+            )
+            lines = content.splitlines()
+            self.assertLess(
+                len(lines),
+                500,
+                f"Protocol {fname} exceeds 500 lines: {len(lines)} lines",
+            )
+
+    def test_ariz_deep_cross_references_and_prerequisites(self):
+        for fname in self.EXPECTED_PROTOCOLS:
+            fpath = self.ARIZ_DEEP_DIR / fname
+            content = fpath.read_text(encoding="utf-8")
+            self.assertIn(
+                "## Prerequisites",
+                content,
+                f"Protocol {fname} must contain a '## Prerequisites' section",
+            )
+
+    def test_ariz_deep_algorithmic_integrity_keywords(self):
+        # 01a: child's language, product-tool, T1/T2, micro-PC, IKR-2, 6 rules
+        p01a = (self.ARIZ_DEEP_DIR / "01a-ariz-85v-analysis.md").read_text(encoding="utf-8")
+        self.assertIn("детский язык", p01a)
+        self.assertIn("Изделие", p01a)
+        self.assertIn("Инструмент", p01a)
+        self.assertIn("T_1", p01a)
+        self.assertIn("T_2", p01a)
+        self.assertIn("Микро-ФП", p01a)
+        self.assertIn("ИКР-2", p01a)
+        self.assertIn("6 правил", p01a)
+
+        # 01b: Part 6 deadlock, multi-cycle N->inf, 4 secondary classes, Part 9 reflection
+        p01b = (self.ARIZ_DEEP_DIR / "01b-ariz-85v-resolution.md").read_text(encoding="utf-8")
+        self.assertIn("Часть 6", p01b)
+        self.assertIn("многоцикловост", p01b)
+        self.assertIn("Часть 9", p01b)
+        self.assertIn("рефлекси", p01b)
+
+        # 02: little people, Group A/B, role-prompting
+        p02 = (self.ARIZ_DEEP_DIR / "02-mmc-operator-protocol.md").read_text(encoding="utf-8")
+        self.assertIn("маленьких человечк", p02)
+        self.assertIn("Группа А", p02)
+        self.assertIn("Группа Б", p02)
+        self.assertIn("ролевой", p02)
+
+        # 03: step back from IFR, minimal dismantling defect
+        p03 = (self.ARIZ_DEEP_DIR / "03-step-back-from-ifr.md").read_text(encoding="utf-8")
+        self.assertIn("Шаг назад от ИКР", p03)
+        self.assertIn("демонтирую", p03)
+        self.assertIn("дефект", p03)
+
+        # 04: Table 2, particle rules, vacuum/void
+        p04 = (self.ARIZ_DEEP_DIR / "04-physical-contradiction-tree.md").read_text(encoding="utf-8")
+        self.assertIn("Таблиц", p04)
+        self.assertIn("Ветвь", p04)
+        self.assertIn("правило частиц", p04)
+        self.assertIn("пустот", p04)
+
+        # 05: Trimming, Rules A, B, C
+        p05 = (self.ARIZ_DEEP_DIR / "05-trimming-algorithm.md").read_text(encoding="utf-8")
+        self.assertIn("свертыван", p05)
+        self.assertIn("Правило А", p05)
+        self.assertIn("Правило Б", p05)
+        self.assertIn("Правило В", p05)
+
+        # 06: Subversion / AFD, saboteur
+        p06 = (self.ARIZ_DEEP_DIR / "06-subversion-analysis-afd.md").read_text(encoding="utf-8")
+        self.assertIn("диверсионн", p06)
+        self.assertIn("Anticipatory Failure Determination", p06)
+        self.assertIn("оружи", p06)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
 

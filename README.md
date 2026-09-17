@@ -21,7 +21,8 @@ An AI agent skill that applies **TRIZ (Теория Решения Изобре�
 | 🔬 **7 Resolution Strategies** | 4 Separation Operators + Satisfy, Bypass, Alternative System (Litvin + Zlotin/Zusman) |
 | 🧭 **Diagnostic Questions** | Zlotin/Zusman navigation: WHERE? WHEN? CONDITION? → instant strategy selection |
 | 📊 **Curated Lookup** | 39 parameters mapped to software/AI/business + 30 candidate principle pairs |
-| 📚 **15 Reference Modules** | Progressive context disclosure — loaded on demand, not all at once |
+| 📚 **22 Reference Modules (3 Tiers)** | Progressive context disclosure (Tier 1-2-3) — zero context bloat |
+| 🧬 **Deep ARIZ-85-V Protocols (Tier-3)** | Deterministic algorithms: Full 9-part ARIZ-85-V, MMC, Step Back, Table 2, Trimming, AFD |
 | 🌐 **Multi-Domain** | Software, AI/LLM, Business/Fintech, Physics, Organizations |
 | 🗺️ **Perception Mapping** | Business TRIZ for organizational contradictions and stakeholder conflicts |
 | ⚖️ **Escape Valve** | Honest handling of irreducible constraints (CAP, Amdahl, thermodynamics) |
@@ -33,11 +34,13 @@ An AI agent skill that applies **TRIZ (Теория Решения Изобре�
 
 ## Architecture
 
+The skill follows a 3-tier progressive disclosure model (Tier-1 $\to$ Tier-2 $\to$ Tier-3):
+
 ```
 triz-universal/
-├── SKILL.md                           ← Tier-1: Lightweight dispatcher
-└── references/                        ← Tier-2: Deep knowledge (loaded on demand)
-    ├── README.md                      Navigation index
+├── SKILL.md                           ← Tier-1: Lightweight dispatcher (~215 lines)
+└── references/                        ← Tier-2: Reference modules (on demand)
+    ├── README.md                      Navigation index across all tiers
     ├── 01-ikr-ideality.md             Ideal Final Result & Ideality
     ├── 02-contradictions.md           Technical → Physical Contradiction
     ├── 03-separation-principles.md    7 Resolution Strategies (Litvin + Zlotin/Zusman)
@@ -52,10 +55,18 @@ triz-universal/
     ├── 12-evaluation-suite.md         5 reference problems with scoring
     ├── 13-perception-mapping.md       Business TRIZ for organizations
     ├── SOURCES.md                      Provenance policy
-    └── CLAIMS.md                       Claim register and evidence levels
+    ├── CLAIMS.md                       Claim register and evidence levels
+    └── ariz-deep/                     ← Tier-3: Deep Algorithmic Protocols (Level 4–5)
+        ├── 01a-ariz-85v-analysis.md   ARIZ-85-V Parts 1–4: De-specialization, Article-Tool, OT/OZ, Micro-PC
+        ├── 01b-ariz-85v-resolution.md ARIZ-85-V Parts 5–9: Information fund, Deadlock breakout, Verification, Reflection
+        ├── 02-mmc-operator-protocol.md Modeling with Little People (MMC) role-prompting algorithm
+        ├── 03-step-back-from-ifr.md    Step Back from IFR: Synthesis of assembly, deployment, cold start
+        ├── 04-physical-contradiction-tree.md Table 2 Decision Tree: Particle rules 8–10, Phase shifts, Vacuum
+        ├── 05-trimming-algorithm.md    Functional Trimming Protocol: Rules A, B, and C
+        └── 06-subversion-analysis-afd.md Anticipatory Failure Determination (AFD / Subversion analysis)
 ```
 
-**Why Tier-2?** Loading all TRIZ theory into context at once wastes tokens and causes "lost in the middle" degradation. The dispatcher `SKILL.md` is always loaded (~144 lines); reference modules are loaded **only when needed**.
+**Why a 3-tier architecture?** Loading all TRIZ theory into context at once wastes tokens and causes "lost in the middle" degradation. The dispatcher `SKILL.md` is always loaded in working memory. Reference modules (Tier-2) are fetched for standard tasks, while deep protocols (Tier-3) are consulted only for Level 4–5 deadlocks, deep microscopic modeling, or adversarial verification.
 
 ## Installation
 

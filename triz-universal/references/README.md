@@ -29,3 +29,17 @@ This directory contains modular reference components for the `triz-universal` sk
 | **[13-perception-mapping.md](13-perception-mapping.md)** | Perception Mapping for organizational/people contradictions: Leads-To networks, conflict pairs, TRIZ extraction. | When resolving team conflicts, strategic deadlocks, or organizational change resistance. |
 | **[SOURCES.md](SOURCES.md)** | Provenance policy and registered source classes. | Before presenting a sensitive claim as established fact. |
 | **[CLAIMS.md](CLAIMS.md)** | Claim register, confidence levels, and validation requirements. | When a recommendation affects performance, security, privacy, finance, or compliance. |
+
+## Tier-3: Deep Algorithmic Protocols (`references/ariz-deep/`)
+
+These protocols contain exhaustive, deterministic step-by-step procedures for complex problems (Levels 4–5), deadlock escape, microscopic modeling, and adversarial stress-testing.
+
+| Protocol Module | Purpose & Core Algorithm | When to Consult |
+|---|---|---|
+| **[ariz-deep/01a-ariz-85v-analysis.md](ariz-deep/01a-ariz-85v-analysis.md)** | ARIZ-85-V Parts 1–4: Mini-problem de-specialization ("child's language"), Article-Tool isolation, $T_1/T_2$ demarcation, Macro/Micro-PC, IKR-2, 6 Article rules. | When facing an intractable trade-off or when ARIZ-Lite yields insufficient depth. |
+| **[ariz-deep/01b-ariz-85v-resolution.md](ariz-deep/01b-ariz-85v-resolution.md)** | ARIZ-85-V Parts 5–9: Information fund synthesis, Part 6 Deadlock Breakthrough protocol, multi-cycle check ($N \to \infty$), 4 secondary problem classes, Part 9 reflection. | When stuck in an inventive deadlock or verifying solution sustainability. |
+| **[ariz-deep/02-mmc-operator-protocol.md](ariz-deep/02-mmc-operator-protocol.md)** | Modeling with Little People (ММЧ) structured role-prompting: Groups A/B/C, 4 troop reorganizations, reverse translation to code/architecture. | When resolving race conditions, lock contention, multi-agent conflicts, or microscopic deadlocks. |
+| **[ariz-deep/03-step-back-from-ifr.md](ariz-deep/03-step-back-from-ifr.md)** | Step Back from IFR: Synthesis of assembly, deployment, zero-downtime migration, and serverless cold start via single minimal defect self-elimination. | When the ideal operating state is clear, but deployment, delivery, or cold boot appears impossible. |
+| **[ariz-deep/04-physical-contradiction-tree.md](ariz-deep/04-physical-contradiction-tree.md)** | ARIZ Table 2 Decision Tree: Exact branching by space/time overlap ($Z_1/Z_2, T_1/T_2$), Particle Rules 8–10, bistability, vacuum/void mobilization. | When selecting physical/systemic mechanisms for an atomic Micro-PC. |
+| **[ariz-deep/05-trimming-algorithm.md](ariz-deep/05-trimming-algorithm.md)** | Functional Trimming Protocol: Functional modeling, component candidate selection, Rules A, B, and C, secondary contradiction pruning. | When reducing architectural complexity, pruning microservices/queues, or maximizing ideality. |
+| **[ariz-deep/06-subversion-analysis-afd.md](ariz-deep/06-subversion-analysis-afd.md)** | Anticipatory Failure Determination (AFD): Inverted saboteur role-play, internal amplifier audit, worst-case synthesis, zero-cost preventive barriers. | When stress-testing system reliability, finding Byzantine failures, or hardening AI agent pipelines. |
