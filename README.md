@@ -1,5 +1,7 @@
 # triz-universal — AI Skill for Non-Compromising Inventive Problem Solving
 
+[English](README.md) | [Русский](README.ru.md)
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/tests-local%20validation-blue.svg)](#testing)
 [![Platform](https://img.shields.io/badge/platform-Antigravity-blue.svg)](https://github.com/google-deepmind)
