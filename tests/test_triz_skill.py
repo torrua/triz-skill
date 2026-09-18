@@ -118,6 +118,17 @@ class TestSkillMetadataAndStandards(unittest.TestCase):
             f"SKILL.md must be under 400 lines for context efficiency, got {len(lines)}",
         )
 
+    def test_skill_progressive_disclosure_structure(self):
+        content = SKILL_FILE.read_text(encoding="utf-8")
+        self.assertIn("Progressive Disclosure", content)
+        self.assertIn("Layer 1: Plain-Language Core", content)
+        self.assertIn("Layer 2: Professional TRIZ Passport", content)
+        self.assertIn("Хотите, я подробно покажу", content)
+        self.assertIn("Would you like a detailed breakdown", content)
+        self.assertIn("Contextual Closing Invitation", content)
+        self.assertIn("Format Exception", content)
+        self.assertIn("Routing Guardrail", content)
+
 
 class TestReferenceIntegrity(unittest.TestCase):
     """Verifies all reference modules exist, are indexed, and resolve correctly."""

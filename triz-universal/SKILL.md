@@ -134,36 +134,64 @@ Verify the resolution against the **Inventive Quality Checklist**:
 
 ---
 
-## 3. Operational Modes
+## 3. Operational Modes & Dual-Loop Execution
 
-The skill functions in three execution modes depending on user intent:
-- **Autonomous Mode (Default):** Silently executes the 5-step ARIZ-AI pipeline, sharpens the physical contradiction, mobilizes latent resources (VPR), and directly delivers the non-compromising resolution and verification template.
+The skill enforces a strict separation between **internal reasoning** and **external delivery**:
+
+```
+[Problem Situation]
+        │
+        ▼
+┌─────────────────────────────────────────────────────────────┐
+│ Loop 1: Deep Methodological Reasoning (Internal / Thinking) │
+│ • ALWAYS runs the 5-step ARIZ-AI pipeline under the hood    │
+│ • Formulates IFR & sharpens Physical Contradiction (Macro/Micro) │
+│ • Audits free Substance-Field Resources (VPR in OZ/OT)      │
+│ • Resolves conflict via Separation Operators without compromise │
+└─────────────────────────────┬───────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│ Loop 2: Contextual Output Delivery (User-Facing)            │
+│ ├─► Layer 1: Plain-Language Core (Default)                 │
+│ │   • Concrete inventive solution in clear, everyday words  │
+│ │   • Zero TRIZ jargon; contextually offers deep breakdown  │
+│ └─► Layer 2: Professional TRIZ Passport                     │
+│     • Full structured passport (PC, VPR, principles, audit) │
+│     • Triggered when user asks for TRIZ or accepts Layer 1  │
+└─────────────────────────────────────────────────────────────┘
+```
+
+The skill operates in three execution modes:
+- **Autonomous Mode (Default):** Runs Loop 1 internally, then presents Layer 1 by default (or Layer 2 if a TRIZ breakdown was requested).
 - **Semi-Automatic Mode:** Asks 4 key diagnostic questions (What is the system? What is the conflict? What parameters matter? What resources are available?), then generates the full ARIZ-AI resolution. Best when the user provides partial context.
 - **Socratic Mode:** Interactively guides the user step-by-step through the ARIZ-AI stages (Mini-Problem → Physical Contradiction → VPR Audit → Separation Operators → Verification), prompting for feedback at each milestone before proceeding.
 
 ---
 
-## 4. Output Delivery Template
+## 4. Output Delivery Template (Progressive Disclosure)
 
-### Language Adaptation
-Always formulate your reasoning, diagnostic path, and final resolution in the language of the user's prompt (e.g., Russian, English).
-- When responding in Russian, use canonical Russian TRIZ terminology: **ИКР** (Ideal Final Result), **ВПР** (Substance-Field Resources), **ФП** (Physical Contradiction), **ТП** (Technical Contradiction), 4 принципа разделения (в пространстве, во времени, по состоянию, по структуре), и 40 приемов Альтшуллера.
-- Append the corresponding localized verification block:
+To maximize practical impact and prevent cognitive overload, the skill employs a **two-layer progressive disclosure model**:
 
-#### English Delivery Template:
-```markdown
-### 💡 TRIZ Inventive Resolution
-- **Physical Contradiction:** [Element X had to be P for R1, and NOT-P for R2]
-- **Diagnostic Path:** [Which question led to strategy selection: WHERE/WHEN/CONDITION/STRUCTURE/SATISFY/BYPASS/ALT]
-- **Strategy Applied:** [Space | Time | Condition | Structure | Satisfy | Bypass | Alternative System]
-- **Inventive Principle(s) Used:** [Principle #N: Name — and WHY it was selected for this specific contradiction]
-- **Resource Mobilized (VPR):** [Zero-cost internal/supersystem resource used]
-- **Resolution:** [How the contradiction was resolved without compromise]
-- **Evidence & Confidence:** [Established fact | Pattern | Hypothesis; source or reason]
-- **Verification Plan:** [Baseline, experiment, success threshold, and owner]
-- **Residual Risks:** [Irreducible limits, privacy, compliance, cost, and failure modes]
-- **Verified Outcome:** [Measured outcome, or conditional expected outcome]
-```
+### Layer 1: Plain-Language Core (Default Output)
+*When to use:* By default for all practical, engineering, business, and everyday problem prompts unless the user explicitly requests a TRIZ solution or methodological analysis.
+*Rules:*
+1. **Solution-First:** Provide 1–3 concrete, non-compromising inventive solutions formulated in clear, everyday language.
+2. **Zero Jargon:** Do NOT use TRIZ terminology (*ФП, ИКР, ВПР, ТП, Оператор РВС, Прием №...*). Explain the physical, architectural, or organizational mechanism using intuitive analogies (what to change, how it works, why the conflict disappears).
+3. **Contextual Closing Invitation:** When responding in standard conversational mode, offer a follow-up invitation to explore the underlying methodology:
+   - *Russian:*
+     > *«Хотите, я подробно покажу, как именно ТРИЗ-алгоритм привёл нас к этому решению (с разбором противоречия, скрытых ресурсов и применённых приёмов)?»*
+   - *English:*
+     > *“Would you like a detailed breakdown of how the TRIZ algorithm arrived at this solution (including the contradiction, resources, and inventive principles used)?”*
+   - *Format Exception:* Omit the closing invitation if the user requested a strict machine-readable format (JSON, YAML, raw code), an ultra-compact list, a one-line answer, or when continuing an interactive multi-step workflow where trailing prompts add unnecessary noise.
+
+### Layer 2: Professional TRIZ Passport (Deep Mode)
+*When to use:* Triggered immediately when:
+1. **User requests a TRIZ solution upfront:** The initial prompt explicitly asks to solve using TRIZ or requests methodological analysis (*"реши по ТРИЗ", "найди решение с помощью ТРИЗ", "разбери по ТРИЗ", "выполни анализ по АРИЗ-85-В", "сформулируй ФП и ИКР", "дай ТРИЗ-паспорт решения", "solve using TRIZ", "show full TRIZ analysis", "formulate physical contradiction"*).
+2. **User accepts the Layer 1 follow-up:** The user responds affirmatively to the Layer 1 closing invitation (*"Да", "Расскажи", "Интересно", "Давай подробнее"*).
+3. **Formal verification context:** The context explicitly requires formal engineering verification, patent claim drafting, or auditable contradiction analysis.
+
+*Routing Guardrail:* Incidental or purely meta-mentions of the word "TRIZ" / "ТРИЗ" (e.g., *"придумай задачи для скилла ТРИЗ"*, *"что такое ТРИЗ?"*, *"проверь код ТРИЗ-модуля"*) MUST NOT trigger the Layer 2 contradiction passport. Layer 2 requires an explicit intent to solve or decompose a problem using TRIZ methodology.
 
 #### Шаблон вывода на русском языке:
 ```markdown
@@ -178,6 +206,21 @@ Always formulate your reasoning, diagnostic path, and final resolution in the la
 - **План верификации:** [Базовая линия, эксперимент, порог успеха и ответственный]
 - **Остаточные риски:** [Неустранимые пределы, приватность, комплаенс, стоимость и сбои]
 - **Проверенный результат:** [Измеренный результат или ожидаемый эффект]
+```
+
+#### English Delivery Template:
+```markdown
+### 💡 TRIZ Inventive Resolution
+- **Physical Contradiction:** [Element X had to be P for R1, and NOT-P for R2]
+- **Diagnostic Path:** [Which question led to strategy selection: WHERE/WHEN/CONDITION/STRUCTURE/SATISFY/BYPASS/ALT]
+- **Strategy Applied:** [Space | Time | Condition | Structure | Satisfy | Bypass | Alternative System]
+- **Inventive Principle(s) Used:** [Principle #N: Name — and WHY it was selected for this specific contradiction]
+- **Resource Mobilized (VPR):** [Zero-cost internal/supersystem resource used]
+- **Resolution:** [How the contradiction was resolved without compromise]
+- **Evidence & Confidence:** [Established fact | Pattern | Hypothesis; source or reason]
+- **Verification Plan:** [Baseline, experiment, success threshold, and owner]
+- **Residual Risks:** [Irreducible limits, privacy, compliance, cost, and failure modes]
+- **Verified Outcome:** [Measured outcome, or conditional expected outcome]
 ```
 
 ---

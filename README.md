@@ -3,7 +3,7 @@
 [English](README.md) | [Русский](README.ru.md)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-local%20validation-blue.svg)](#testing)
+[![Tests](https://img.shields.io/badge/tests-67%20passed%2C%203%20skipped-brightgreen.svg)](#testing)
 [![Platform](https://img.shields.io/badge/platform-Antigravity-blue.svg)](https://github.com/google-deepmind)
 
 > **Core Axiom:** Seek an inventive resolution first; when a hard limit remains, state its evidence and consequences rather than inventing a guarantee.
@@ -26,7 +26,7 @@ An AI agent skill that applies **TRIZ (Теория Решения Изобре�
 | 🌐 **Multi-Domain** | Software, AI/LLM, Business/Fintech, Physics, Organizations |
 | 🗺️ **Perception Mapping** | Business TRIZ for organizational contradictions and stakeholder conflicts |
 | ⚖️ **Escape Valve** | Honest handling of irreducible constraints (CAP, Amdahl, thermodynamics) |
-| 🎯 **Three Modes** | Autonomous (default), Semi-Automatic, and Socratic (interactive) |
+| 🎯 **Dual-Loop & Three Modes** | Autonomous with Progressive Disclosure (Layer 1 plain default / Layer 2 deep passport), Semi-Automatic, Socratic |
 | 🇷🇺 **Bilingual (EN / RU)** | Canonical Altshuller Russian terminology, bilingual triggers, localized template |
 | 🔍 **Evidence & Risk Traceability** | Output records confidence, validation plan, and residual risks |
 | 📝 **Evaluation Assets** | Reference problems plus blind expert-review cases |
@@ -137,7 +137,19 @@ To check or synchronize an installed copy, provide its explicit destination:
 - ✅ 39 automated tests
 - ✅ Escape valve for irreducible constraints
 
-### v2.1.0 (Current Release)
+### v3.0.0 (Current Release)
+- ✅ **Dual-Loop Execution:** Strict separation between internal methodological reasoning (always 100% TRIZ under the hood) and external user-facing delivery
+- ✅ **Progressive Disclosure Architecture:** Layer 1 Plain-Language Core by default (solution-first, zero TRIZ jargon, intuitive analogies) + Layer 2 Professional TRIZ Passport
+- ✅ **Contextual Follow-Up & Routing Guardrails:** Contextual closing invitation with format exceptions (JSON/code/minimal), preventing false triggers on meta-mentions of "TRIZ"
+- ✅ **Hardened Tier-3 Canonical Protocols:** Restructured ARIZ-85-V Parts 1-4 with canonical MMC, Step Back from IFR, and Table 2 cross-references
+- ✅ **70 Automated Unit Tests:** 67 passed, 3 skipped, full verification across all tiers and output layers
+
+### v2.2.0
+- ✅ **Tier-3 Deep Algorithmic Protocols:** 7 dedicated executable step-by-step protocols in `references/ariz-deep/` (ARIZ-85-V Parts 1-9, MMC Operator, Step Back from IFR, Table 2 Tree, Trimming, AFD)
+- ✅ **3-Tier Context Architecture:** Tier-1 Dispatcher (<250 lines), Tier-2 Foundation Modules (15 files), Tier-3 Algorithmic Protocols (7 files)
+- ✅ **Quick Decision Tree Routing:** Routing rows in SKILL.md for deep ARIZ-85-V deadlock resolution
+
+### v2.1.0
 - ✅ Curated, explicitly non-deterministic contradiction lookup
 - ✅ Inventive principles mapped to each separation operator
 - ✅ Evaluation suite with 5 reference solutions and pass/fail scoring
