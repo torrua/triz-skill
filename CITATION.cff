@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+title: "triz-universal: AI Agent Skill for Non-Compromising Inventive Problem Solving"
+message: "If you use this skill or evaluation corpus in your research or engineering workflows, please cite it using the metadata below."
+type: software
+authors:
+  - alias: "torrua"
+    name: "torrua"
+repository-code: "https://github.com/torrua/triz-skill"
+license: MIT
+version: 3.0.0
+date-released: "2026-09-29"
+keywords:
+  - TRIZ
+  - ARIZ-85-V
+  - AI agents
+  - prompt engineering
+  - inventive problem solving
+  - physical contradiction
+  - agent skills

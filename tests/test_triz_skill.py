@@ -10,6 +10,7 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -205,7 +206,7 @@ class TestReliabilityContract(unittest.TestCase):
 
 
 class TestReleaseTooling(unittest.TestCase):
-    """Verifies that deployed-copy checks are explicit release actions."""
+    """Verifies that deployed-copy checks and cross-platform packaging are explicit release actions."""
 
     def test_deployment_sync_script_exists(self):
         script = ROOT_DIR / "scripts" / "sync-deployment.ps1"
@@ -214,6 +215,9 @@ class TestReleaseTooling(unittest.TestCase):
         self.assertIn("Check", content)
         self.assertIn("Apply", content)
         self.assertIn("TRIZ_DEPLOY_DIR", content)
+
+        py_script = ROOT_DIR / "scripts" / "sync_deployment.py"
+        self.assertTrue(py_script.is_file(), "scripts/sync_deployment.py must exist")
 
     @unittest.skipUnless(shutil.which("powershell"), "PowerShell is required for deployment sync test")
     def test_deployment_sync_apply_creates_a_byte_identical_copy(self):
@@ -242,6 +246,28 @@ class TestReleaseTooling(unittest.TestCase):
                 },
             )
 
+    def test_python_deployment_sync_and_zip_packaging(self):
+        py_script = ROOT_DIR / "scripts" / "sync_deployment.py"
+        with tempfile.TemporaryDirectory(dir=ROOT_DIR) as temporary_root:
+            destination = Path(temporary_root) / "triz-universal"
+            zip_out = Path(temporary_root) / "triz-universal-test.zip"
+            res_apply = subprocess.run(
+                [sys.executable, str(py_script), "--mode", "apply", "--destination", str(destination), "--package-zip", str(zip_out)],
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+            )
+            self.assertEqual(res_apply.returncode, 0, res_apply.stderr)
+            self.assertTrue(zip_out.is_file(), "Release zip archive must be created")
+
+            res_check = subprocess.run(
+                [sys.executable, str(py_script), "--mode", "check", "--destination", str(destination)],
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+            )
+            self.assertEqual(res_check.returncode, 0, res_check.stderr)
+
 
 class TestBehavioralEvaluationAssets(unittest.TestCase):
     """Keeps the blind-evaluation contract separate from phrase-based linting."""
@@ -250,11 +276,37 @@ class TestBehavioralEvaluationAssets(unittest.TestCase):
         cases_path = ROOT_DIR / "evals" / "cases.json"
         self.assertTrue(cases_path.is_file(), "evals/cases.json must exist")
         cases = json.loads(cases_path.read_text(encoding="utf-8"))
-        self.assertGreaterEqual(len(cases), 4)
+        self.assertGreaterEqual(len(cases), 20)
+        outcomes_seen = set()
         for case in cases:
             self.assertTrue(case["hard_constraints"], f"{case['id']} needs hard constraints")
             self.assertTrue(case["disallowed_claims"], f"{case['id']} needs prohibited claims")
-            self.assertIn(case["expected_outcome"], {"eliminate", "prove-limit", "managed-tradeoff"})
+            self.assertIn(
+                case["expected_outcome"],
+                {"eliminate", "prove-limit", "managed-tradeoff", "no-trigger"},
+            )
+            outcomes_seen.add(case["expected_outcome"])
+        self.assertEqual(
+            outcomes_seen,
+            {"eliminate", "prove-limit", "managed-tradeoff", "no-trigger"},
+            "evals/cases.json must cover all 4 outcome types including no-trigger",
+        )
+
+    def test_trigger_corpus_and_eval_runner_pass(self):
+        trigger_path = ROOT_DIR / "evals" / "trigger_corpus.json"
+        self.assertTrue(trigger_path.is_file(), "evals/trigger_corpus.json must exist")
+        triggers = json.loads(trigger_path.read_text(encoding="utf-8"))
+        self.assertGreaterEqual(len(triggers), 40)
+
+        runner = ROOT_DIR / "evals" / "run_evals.py"
+        self.assertTrue(runner.is_file(), "evals/run_evals.py must exist")
+        res = subprocess.run(
+            [sys.executable, str(runner)],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+        )
+        self.assertEqual(res.returncode, 0, f"evals/run_evals.py failed: {res.stderr}\n{res.stdout}")
 
     def test_evaluation_guide_requires_blinded_expert_review(self):
         guide = ROOT_DIR / "evals" / "README.md"
@@ -262,6 +314,8 @@ class TestBehavioralEvaluationAssets(unittest.TestCase):
         content = guide.read_text(encoding="utf-8")
         self.assertIn("blind", content.lower())
         self.assertIn("expert review", content.lower())
+        report = ROOT_DIR / "evals" / "BENCHMARK_REPORT.md"
+        self.assertTrue(report.is_file(), "evals/BENCHMARK_REPORT.md must exist")
 
 
 class TestAntiRationalizationGuardrails(unittest.TestCase):
@@ -972,6 +1026,130 @@ class TestTier3DeepProtocols(unittest.TestCase):
         self.assertIn("диверсионн", p06)
         self.assertIn("Anticipatory Failure Determination", p06)
         self.assertIn("оружи", p06)
+
+
+class TestVersionAndDocConsistency(unittest.TestCase):
+    """Verifies version parity, changelog completeness, path sanitization, and community/CI files."""
+
+    def test_version_synchronized_across_all_docs(self):
+        version = (ROOT_DIR / "VERSION").read_text(encoding="utf-8").strip()
+        self.assertEqual(version, "3.0.0")
+
+        changelog = (ROOT_DIR / "CHANGELOG.md").read_text(encoding="utf-8")
+        for ver in ["3.0.0", "2.2.0", "2.1.1", "2.1.0", "2.0.0", "1.0.0"]:
+            self.assertIn(f"## [{ver}]", changelog, f"Version [{ver}] missing from CHANGELOG.md")
+
+        readme_en = (ROOT_DIR / "README.md").read_text(encoding="utf-8")
+        readme_ru = (ROOT_DIR / "README.ru.md").read_text(encoding="utf-8")
+        citation = (ROOT_DIR / "CITATION.cff").read_text(encoding="utf-8")
+        roadmap = (ROOT_DIR / "docs" / "internal" / "RESEARCH_PLAN_AND_ROADMAP.md").read_text(encoding="utf-8")
+
+        self.assertIn(f"v{version} (Current Release)", readme_en)
+        self.assertIn(f"v{version} (Текущий релиз)", readme_ru)
+        self.assertIn(f"version: {version}", citation)
+        self.assertIn(f"v{version} implemented", roadmap)
+
+    def test_no_local_environment_paths_leaked(self):
+        forbidden = ["Users\\User", "Dropbox\\Python"]
+        for path in ROOT_DIR.rglob("*"):
+            if not path.is_file() or ".git" in path.parts or "dist" in path.parts or "__pycache__" in path.parts:
+                continue
+            if path.resolve() == Path(__file__).resolve():
+                continue
+            text = path.read_text(encoding="utf-8", errors="ignore")
+            for needle in forbidden:
+                self.assertNotIn(
+                    needle,
+                    text,
+                    f"Local environment path '{needle}' leaked in {path.relative_to(ROOT_DIR)}",
+                )
+
+    def test_internal_docs_moved_out_of_root(self):
+        self.assertFalse((ROOT_DIR / "RESEARCH_PLAN_AND_ROADMAP.md").exists())
+        self.assertFalse((ROOT_DIR / "GRILL_ME_AND_GOAL_AUDIT.md").exists())
+        self.assertTrue((ROOT_DIR / "docs" / "internal" / "RESEARCH_PLAN_AND_ROADMAP.md").is_file())
+        self.assertTrue((ROOT_DIR / "docs" / "internal" / "GRILL_ME_AND_GOAL_AUDIT.md").is_file())
+
+    def test_ci_and_community_files_exist(self):
+        for rel in [
+            "CONTRIBUTING.md",
+            "SECURITY.md",
+            "CITATION.cff",
+            "scripts/sync_deployment.py",
+        ]:
+            self.assertTrue((ROOT_DIR / rel).is_file(), f"Required repository file missing: {rel}")
+        has_ci = (ROOT_DIR / ".github/workflows/ci.yml").is_file() or (ROOT_DIR / "scripts/github-actions-ci.yml").is_file()
+        self.assertTrue(has_ci, "CI workflow file must exist")
+
+    def test_bilingual_readme_parity(self):
+        readme_en = (ROOT_DIR / "README.md").read_text(encoding="utf-8")
+        readme_ru = (ROOT_DIR / "README.ru.md").read_text(encoding="utf-8")
+        for doc in [readme_en, readme_ru]:
+            self.assertIn("claude-code", doc)
+            self.assertIn("Claude.ai", doc)
+            self.assertIn("cursor", doc)
+            self.assertIn("codex", doc)
+            self.assertIn("Layer 1", doc)
+            self.assertIn("Layer 2", doc)
+            self.assertIn("TRIZ_DEPLOY_DIR", doc)
+
+
+class TestSkillMdAuditFixesV3(unittest.TestCase):
+    """Verifies all P0, P1, and P2 fixes from the v3.0.0 SKILL.md and repository audit."""
+
+    def test_description_has_bilingual_and_negative_triggers(self):
+        content = SKILL_FILE.read_text(encoding="utf-8")
+        frontmatter = content.split("---", 2)[1]
+        self.assertIn("по ТРИЗ", frontmatter)
+        self.assertIn("ИКР", frontmatter)
+        self.assertIn("Do NOT use for", frontmatter)
+
+    def test_language_adaptation_and_when_not_to_use_in_tier1(self):
+        content = SKILL_FILE.read_text(encoding="utf-8")
+        self.assertIn("Language Adaptation Directive", content)
+        self.assertIn("When NOT to Use This Skill", content)
+
+    def test_layer1_supports_all_three_outcomes_and_assumptions(self):
+        content = SKILL_FILE.read_text(encoding="utf-8")
+        self.assertIn("Outcome 1", content)
+        self.assertIn("Outcome 2", content)
+        self.assertIn("Outcome 3", content)
+        self.assertIn("Assumptions, Residual Limits & Quick Verification", content)
+
+    def test_escape_valve_defines_three_passes_and_limit_types(self):
+        content = SKILL_FILE.read_text(encoding="utf-8")
+        self.assertIn("3 distinct ARIZ-AI passes", content)
+        self.assertIn("Pass 1:", content)
+        self.assertIn("Pass 2:", content)
+        self.assertIn("Pass 3:", content)
+        self.assertIn("Formal/mathematical theorems", content)
+        self.assertIn("Non-negotiable external limits", content)
+
+    def test_unverified_status_and_suggested_role_in_templates(self):
+        content = SKILL_FILE.read_text(encoding="utf-8")
+        self.assertIn("Status: UNVERIFIED", content)
+        self.assertIn("Статус: НЕ ПРОВЕРЕНО", content)
+        self.assertIn("suggested verification role", content)
+        self.assertIn("предлагаемая роль для проверки", content)
+
+    def test_matrix_non_deterministic_and_benchmarks_quarantined(self):
+        content = SKILL_FILE.read_text(encoding="utf-8")
+        self.assertNotIn("Need deterministic contradiction matrix lookup", content)
+        self.assertIn("Need curated heuristic contradiction lookup (non-deterministic)", content)
+        self.assertIn("Offline Maintainer & Regression Assets (DO NOT load during live problem-solving)", content)
+
+    def test_sources_and_claims_completed_with_canonical_editions(self):
+        sources = (REFS_DIR / "SOURCES.md").read_text(encoding="utf-8")
+        self.assertIn("TRIZ-ALT-79", sources)
+        self.assertIn("TRIZ-ALT-86", sources)
+        self.assertIn("TRIZ-ZZ-89", sources)
+        self.assertIn("CS-CAP-02", sources)
+        self.assertIn("CS-AMDAHL-67", sources)
+        self.assertIn("Clean-Room & License Provenance Notice", sources)
+
+        claims = (REFS_DIR / "CLAIMS.md").read_text(encoding="utf-8")
+        for cid in ["C-CAP-01", "C-AMDAHL-01", "C-BLOOM-01", "C-IOURING-01", "C-RLHF-01"]:
+            self.assertIn(cid, claims)
 
 
 if __name__ == "__main__":

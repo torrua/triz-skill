@@ -1,0 +1,322 @@
+[
+  {
+    "id": "pos-01",
+    "language": "en",
+    "prompt": "We need sub-10ms API read latency AND strict ACID consistency on writes without adding new cache servers.",
+    "should_trigger": true,
+    "expected_layer": 1,
+    "category": "contradiction-software"
+  },
+  {
+    "id": "pos-02",
+    "language": "en",
+    "prompt": "Solve using TRIZ: how do we dissipate 5 kW of heat from a sealed enclosure without fans or external vents?",
+    "should_trigger": true,
+    "expected_layer": 2,
+    "category": "explicit-triz-en"
+  },
+  {
+    "id": "pos-03",
+    "language": "ru",
+    "prompt": "Реши по ТРИЗ: как проверить подлинность пользователя без трения (1 клик) и без риска фрода?",
+    "should_trigger": true,
+    "expected_layer": 2,
+    "category": "explicit-triz-ru"
+  },
+  {
+    "id": "pos-04",
+    "language": "ru",
+    "prompt": "Сформулируй ФП и ИКР для задачи: база данных должна хранить всю историю за 10 лет и занимать не более 50 ГБ на быстром диске.",
+    "should_trigger": true,
+    "expected_layer": 2,
+    "category": "explicit-ikr-fp-ru"
+  },
+  {
+    "id": "pos-05",
+    "language": "ru",
+    "prompt": "Мы попали в архитектурный тупик: если включаем полное логирование, падает пропускная способность, если выключаем — нарушаем требования аудита.",
+    "should_trigger": true,
+    "expected_layer": 1,
+    "category": "contradiction-ru"
+  },
+  {
+    "id": "pos-06",
+    "language": "en",
+    "prompt": "Formulate the physical contradiction and VPR for an AI agent whose prompt context must include 50,000 lines of docs without exceeding a 2,000-token budget.",
+    "should_trigger": true,
+    "expected_layer": 2,
+    "category": "explicit-pc-vpr-en"
+  },
+  {
+    "id": "pos-07",
+    "language": "en",
+    "prompt": "Our product faces an impossible trade-off between enterprise customization and maintaining a single multi-tenant codebase.",
+    "should_trigger": true,
+    "expected_layer": 1,
+    "category": "contradiction-business"
+  },
+  {
+    "id": "pos-08",
+    "language": "ru",
+    "prompt": "У нас неразрешимый компромисс между скоростью релиза фич и 3-дневным ручным ревью безопасности.",
+    "should_trigger": true,
+    "expected_layer": 1,
+    "category": "contradiction-org-ru"
+  },
+  {
+    "id": "pos-09",
+    "language": "en",
+    "prompt": "How can we eliminate the contradiction between strong encryption (immutability) and GDPR Right to Erasure in an append-only audit log?",
+    "should_trigger": true,
+    "expected_layer": 1,
+    "category": "contradiction-compliance"
+  },
+  {
+    "id": "pos-10",
+    "language": "ru",
+    "prompt": "Выполни анализ по АРИЗ-85-В для конфликта: крыло дрона должно быть жёстким при полёте и компактно складываться в тубус.",
+    "should_trigger": true,
+    "expected_layer": 2,
+    "category": "explicit-ariz-ru"
+  },
+  {
+    "id": "pos-11",
+    "language": "en",
+    "prompt": "We have conflicting requirements: mobile courier app must receive orders in under 1 second AND consume less than 2% battery per shift.",
+    "should_trigger": true,
+    "expected_layer": 1,
+    "category": "contradiction-mobile"
+  },
+  {
+    "id": "pos-12",
+    "language": "ru",
+    "prompt": "Найди решение без компромиссов (через ВПР): нужно дедуплицировать 100 млн событий в час при лимите памяти 16 МБ.",
+    "should_trigger": true,
+    "expected_layer": 2,
+    "category": "explicit-vpr-ru"
+  },
+  {
+    "id": "pos-13",
+    "language": "en",
+    "prompt": "Zero budget optimization: we must cut serverless cold-start latency for a 2GB model below 50ms without paying for 24/7 warm GPU instances.",
+    "should_trigger": true,
+    "expected_layer": 1,
+    "category": "contradiction-ai"
+  },
+  {
+    "id": "pos-14",
+    "language": "ru",
+    "prompt": "Противоречие в организации: команды хотят автономно менять схемы БД, но общая аналитика падает при любом несогласованном изменении.",
+    "should_trigger": true,
+    "expected_layer": 1,
+    "category": "contradiction-org-ru"
+  },
+  {
+    "id": "pos-15",
+    "language": "en",
+    "prompt": "Show full TRIZ analysis for zero-downtime column splitting on a 500M-row table while live traffic writes to both schemas.",
+    "should_trigger": true,
+    "expected_layer": 2,
+    "category": "explicit-triz-en"
+  },
+  {
+    "id": "pos-16",
+    "language": "ru",
+    "prompt": "Дай ТРИЗ-паспорт решения: как охлаждать электронику в вакууме без увеличения массы радиатора?",
+    "should_trigger": true,
+    "expected_layer": 2,
+    "category": "explicit-passport-ru"
+  },
+  {
+    "id": "pos-17",
+    "language": "en",
+    "prompt": "We are stuck in an architectural deadlock between strict microservice isolation and atomic cross-service balance transfers.",
+    "should_trigger": true,
+    "expected_layer": 1,
+    "category": "contradiction-distributed"
+  },
+  {
+    "id": "pos-18",
+    "language": "ru",
+    "prompt": "Как устранить техническое противоречие: при увеличении частоты опроса датчиков растёт точность, но перегревается контроллер?",
+    "should_trigger": true,
+    "expected_layer": 2,
+    "category": "explicit-tc-ru"
+  },
+  {
+    "id": "pos-19",
+    "language": "en",
+    "prompt": "CAP theorem conflict: how do we design inventory reservation so network partitions don't cause double-selling while keeping regional checkouts responsive?",
+    "should_trigger": true,
+    "expected_layer": 1,
+    "category": "contradiction-cap"
+  },
+  {
+    "id": "pos-20",
+    "language": "ru",
+    "prompt": "Помоги разрешить физическое противоречие: упаковка должна быть сверхпрочной при доставке и мгновенно открываться одной рукой без ножниц.",
+    "should_trigger": true,
+    "expected_layer": 2,
+    "category": "explicit-pc-ru"
+  },
+  {
+    "id": "neg-01",
+    "language": "en",
+    "prompt": "PostgreSQL throws `ERROR: deadlock detected` in `transfer_funds()` because transaction 1 locks row A then B and transaction 2 locks B then A. Fix the SQL code.",
+    "should_trigger": false,
+    "expected_layer": 0,
+    "category": "routine-db-deadlock"
+  },
+  {
+    "id": "neg-02",
+    "language": "ru",
+    "prompt": "В логах Postgres ошибка `deadlock detected` при обновлении таблицы `orders`. Вот стектрейс, помоги найти, где перепутана очерёдность локов.",
+    "should_trigger": false,
+    "expected_layer": 0,
+    "category": "routine-db-deadlock-ru"
+  },
+  {
+    "id": "neg-03",
+    "language": "en",
+    "prompt": "What is TRIZ and when did Genrich Altshuller publish his first book?",
+    "should_trigger": false,
+    "expected_layer": 0,
+    "category": "meta-triz-info"
+  },
+  {
+    "id": "neg-04",
+    "language": "ru",
+    "prompt": "Что такое ТРИЗ и чем АРИЗ-85-В отличается от мозгового штурма?",
+    "should_trigger": false,
+    "expected_layer": 0,
+    "category": "meta-triz-info-ru"
+  },
+  {
+    "id": "neg-05",
+    "language": "ru",
+    "prompt": "Проверь орфографию и разметку в моём файле `triz-module.md`.",
+    "should_trigger": false,
+    "expected_layer": 0,
+    "category": "meta-triz-lint-ru"
+  },
+  {
+    "id": "neg-06",
+    "language": "en",
+    "prompt": "Find the CPU bottleneck in this Python function that loops over 10,000 items calling `re.compile()` inside the loop.",
+    "should_trigger": false,
+    "expected_layer": 0,
+    "category": "routine-profiling-bug"
+  },
+  {
+    "id": "neg-07",
+    "language": "en",
+    "prompt": "List 3 standard pros and cons of PostgreSQL vs MySQL for a beginner blog project.",
+    "should_trigger": false,
+    "expected_layer": 0,
+    "category": "simple-pros-cons"
+  },
+  {
+    "id": "neg-08",
+    "language": "ru",
+    "prompt": "Сравни плюсы и минусы React и Vue для простого лендинга.",
+    "should_trigger": false,
+    "expected_layer": 0,
+    "category": "simple-pros-cons-ru"
+  },
+  {
+    "id": "neg-09",
+    "language": "en",
+    "prompt": "Write a unit test in pytest for a `calculate_discount(price, percent)` function.",
+    "should_trigger": false,
+    "expected_layer": 0,
+    "category": "routine-coding"
+  },
+  {
+    "id": "neg-10",
+    "language": "ru",
+    "prompt": "У нас учебный пет-проект, мы явно хотим обычный компромисс через простой in-memory TTL-кэш без перестройки архитектуры. Какой TTL поставить: 10с или 60с?",
+    "should_trigger": false,
+    "expected_layer": 0,
+    "category": "explicit-user-compromise-ru"
+  },
+  {
+    "id": "neg-11",
+    "language": "en",
+    "prompt": "I explicitly want a simple standard trade-off for my weekend prototype: should I set the LRU cache size to 100 MB or 250 MB?",
+    "should_trigger": false,
+    "expected_layer": 0,
+    "category": "explicit-user-compromise-en"
+  },
+  {
+    "id": "neg-12",
+    "language": "en",
+    "prompt": "Fix this TypeError: `cannot unpack non-iterable NoneType object` in `parse_config.py`.",
+    "should_trigger": false,
+    "expected_layer": 0,
+    "category": "routine-bug"
+  },
+  {
+    "id": "neg-13",
+    "language": "ru",
+    "prompt": "Придумай 5 тестовых задач для собеседования преподавателя по ТРИЗ.",
+    "should_trigger": false,
+    "expected_layer": 0,
+    "category": "meta-triz-tasks-ru"
+  },
+  {
+    "id": "neg-14",
+    "language": "en",
+    "prompt": "Translate the 40 TRIZ inventive principle titles from Russian into Spanish.",
+    "should_trigger": false,
+    "expected_layer": 0,
+    "category": "meta-triz-translation"
+  },
+  {
+    "id": "neg-15",
+    "language": "en",
+    "prompt": "How do I center a div vertically and horizontally using Tailwind CSS?",
+    "should_trigger": false,
+    "expected_layer": 0,
+    "category": "routine-css"
+  },
+  {
+    "id": "neg-16",
+    "language": "ru",
+    "prompt": "Напиши регулярное выражение для проверки формата email в Python.",
+    "should_trigger": false,
+    "expected_layer": 0,
+    "category": "routine-regex-ru"
+  },
+  {
+    "id": "neg-17",
+    "language": "en",
+    "prompt": "Why does `std::mutex` throw `system_error` when locked twice on the same thread in C++? Explain `std::recursive_mutex`.",
+    "should_trigger": false,
+    "expected_layer": 0,
+    "category": "routine-mutex-deadlock"
+  },
+  {
+    "id": "neg-18",
+    "language": "ru",
+    "prompt": "Как в Git отменить последний коммит, сохранив изменения в рабочей директории?",
+    "should_trigger": false,
+    "expected_layer": 0,
+    "category": "routine-git-ru"
+  },
+  {
+    "id": "neg-19",
+    "language": "en",
+    "prompt": "Create a GitHub Actions workflow that runs `flake8` and `pytest` on push.",
+    "should_trigger": false,
+    "expected_layer": 0,
+    "category": "routine-ci"
+  },
+  {
+    "id": "neg-20",
+    "language": "ru",
+    "prompt": "Где в этом SQL-запросе пропущен индекс (bottleneck в `WHERE user_id = ?`)?",
+    "should_trigger": false,
+    "expected_layer": 0,
+    "category": "routine-sql-index-ru"
+  }
+]

@@ -1,6 +1,8 @@
 [
   {
     "id": "distributed-inventory-consistency",
+    "domain": "software",
+    "language": "en",
     "prompt": "Serve low-latency catalog reads while never overselling inventory across multiple services.",
     "hard_constraints": [
       "Inventory reservation must be linearizable at the decision point.",
@@ -11,25 +13,33 @@
       "A read replica is not an additional component."
     ],
     "expected_outcome": "eliminate",
-    "required_evidence": ["consistency model", "lag or staleness measurement", "failure recovery plan"]
+    "required_evidence": ["consistency model", "lag or staleness measurement", "failure recovery plan"],
+    "baseline_red_output": "We can balance between speed and consistency by using a short 5-second cache TTL and accepting a slight risk of overselling during traffic spikes.",
+    "skill_green_output": "Separate the read-heavy browsing path from the transactional reservation step: serve product catalog views from snapshot/read-optimized storage with an explicit consistency model and lag or staleness measurement (e.g., 100-500ms bounded staleness), while routing the final checkout decrement through a partitioned atomic counter or primary serializable check with a documented failure recovery plan. Status: UNVERIFIED (conditional expected outcome)."
   },
   {
     "id": "regulated-onboarding",
+    "domain": "fintech",
+    "language": "en",
     "prompt": "Reduce onboarding abandonment without violating KYC/AML, privacy, or licensing requirements.",
     "hard_constraints": [
       "Jurisdiction-specific KYC/AML obligations.",
-      "Lawful basis and consent for telemetry." 
+      "Lawful basis and consent for telemetry."
     ],
     "disallowed_claims": [
       "Device, SIM, or IP data is free and lawful by default.",
       "Deferred KYC is compliant in every jurisdiction."
     ],
     "expected_outcome": "prove-limit",
-    "required_evidence": ["jurisdiction gate", "privacy review", "approved state machine"]
+    "required_evidence": ["jurisdiction gate", "privacy review", "approved state machine"],
+    "baseline_red_output": "A reasonable compromise is to cut the KYC form down to 2 fields at signup and collect device fingerprints silently for free, giving 100% compliance across all countries.",
+    "skill_green_output": "Irreducible legal limit: statutory KYC/AML verification before regulated money movement cannot be bypassed without violating financial law (jurisdiction gate required). Within this hard legal bound, separate unregulated product exploration in time from regulated funding: allow users to explore a sandbox/read-only state first, and trigger mandatory KYC strictly before account funding or transfer. Any device/session risk signals require a privacy review and lawful consent basis. Status: UNVERIFIED (requires counsel sign-off on the approved state machine)."
   },
   {
     "id": "memory-latency-budget",
-    "prompt": "Meet a 16 MB memory limit and sub-millisecond deduplication latency for a defined event stream.",
+    "domain": "software",
+    "language": "en",
+    "prompt": "Meet a 16 MB memory limit and sub-millisecond deduplication latency for a 100M-event/hour stream, where the product owner allows a configurable 0.01% false-positive tolerance.",
     "hard_constraints": [
       "16 MB process-memory limit.",
       "Specified false-positive and false-negative tolerances."
@@ -39,11 +49,15 @@
       "OS cache consumes no memory."
     ],
     "expected_outcome": "managed-tradeoff",
-    "required_evidence": ["data distribution", "error budget", "benchmark environment"]
+    "required_evidence": ["data distribution", "error budget", "benchmark environment"],
+    "baseline_red_output": "Use a Bloom filter in 16 MB RAM; it has zero error and uses OS cache which consumes no memory.",
+    "skill_green_output": "Exact deduplication of 100M 64-bit IDs violates the 16 MB information-theoretic ceiling (~800 MB needed for raw keys). Because the product owner explicitly authorizes a soft accuracy target (error budget <= 0.01% false positives, 0% false negatives), use time-windowed Cuckoo/Bloom fingerprint buckets sized within 16 MB RAM. Assumptions & verification: requires checking input data distribution and running an explicit benchmark environment test to confirm p99 < 1ms and empirical false-positive rate within the authorized error budget. Status: UNVERIFIED."
   },
   {
     "id": "cap-availability-consistency",
-    "prompt": "Keep writes strongly consistent and remain available during a network partition.",
+    "domain": "software",
+    "language": "en",
+    "prompt": "Keep writes strongly consistent (linearizable) and remain 100% available for writes on both sides of an active network partition.",
     "hard_constraints": [
       "Network partitions are in scope.",
       "Strong consistency means a linearizable write acknowledgement."
@@ -53,6 +67,284 @@
       "Eventual consistency satisfies a linearizable write invariant."
     ],
     "expected_outcome": "prove-limit",
-    "required_evidence": ["formal consistency definition", "partition behavior", "authorized availability trade-off"]
+    "required_evidence": ["formal consistency definition", "partition behavior", "authorized availability trade-off"],
+    "baseline_red_output": "CAP can be eliminated by a cache or retry queue so all nodes stay 100% available and strongly consistent.",
+    "skill_green_output": "Irreducible mathematical limit (CAP Theorem, Gilbert & Lynch 2002): under an active network partition, a single global register cannot simultaneously guarantee linearizable write acknowledgements and write availability on minority partitions. After checking formal consistency definitions and partition behavior, you must either enforce majority quorum (blocking minority partition writes) or request an authorized availability trade-off (e.g., partition-local leases or CRDTs with explicit post-partition reconciliation). Status: UNVERIFIED."
+  },
+  {
+    "id": "hft-telemetry-logging-ru",
+    "domain": "software",
+    "language": "ru",
+    "prompt": "Торговое ядро C++ имеет бюджет 5 мкс на ордер. Регулятор требует логировать каждое изменение состояния, но запись на диск занимает 45 мкс.",
+    "hard_constraints": [
+      "Бюджет горячего пути < 5 мкс.",
+      "Полнота регуляторного аудита (без выборочного сэмплирования 1%)."
+    ],
+    "disallowed_claims": [
+      "Асинхронный буфер в ОЗУ гарантирует нулевую потерю данных при мгновенном отключении питания без UPS/NVRAM.",
+      "Можно логировать только 1% транзакций."
+    ],
+    "expected_outcome": "eliminate",
+    "required_evidence": ["isolation of hot path", "ring buffer sizing", "power-loss durability risk"],
+    "baseline_red_output": "Разумный компромисс — логировать только 1% транзакций через сэмплирование, чтобы уложиться в 5 мкс.",
+    "skill_green_output": "Разделите фиксацию события в памяти и физический сброс на диск во времени и структуре (isolation of hot path): торговый поток записывает 64-битную запись в неблокирующий кольцевой буфер разделяемой памяти (lock-free ring buffer / io_uring) за ~10–50 нс, а выделенное ядро CPU асинхронно сбрасывает страницы на NVMe. Допущения и проверка: требуется расчёт размера буфера (ring buffer sizing) под пиковый бурст и учёт остаточного риска потери хвоста буфера при потере питания (power-loss durability risk решается через NVRAM/батарейный контроллер). Статус: НЕ ПРОВЕРЕНО."
+  },
+  {
+    "id": "ai-context-saturation",
+    "domain": "ai",
+    "language": "en",
+    "prompt": "Our coding agent needs exact schemas for 400 internal API endpoints (75,000 tokens), but loading them all into every prompt blows our latency and token budget.",
+    "hard_constraints": [
+      "Zero hallucinated API parameter names.",
+      "Active prompt overhead under 3,000 tokens per turn."
+    ],
+    "disallowed_claims": [
+      "Lossy summarization preserves 100% of exact field types.",
+      "Fine-tuning alone guarantees zero schema drift without retrieval."
+    ],
+    "expected_outcome": "eliminate",
+    "required_evidence": ["progressive disclosure index", "on-demand schema retrieval", "token budget measurement"],
+    "baseline_red_output": "We should balance between cost and accuracy by summarizing the 400 endpoints into a short 2,000-token cheat sheet, accepting a slight performance hit in schema accuracy.",
+    "skill_green_output": "Separate catalog discovery from exact schema validation in condition and structure: keep a compact progressive disclosure index (<1,500 tokens) in the system prompt listing endpoint names and intents, and use on-demand schema retrieval via a tool call to load the exact JSON schema only for the 1-2 endpoints invoked in the current turn. Assumptions & verification: perform token budget measurement per turn and verify tool-call latency overhead. Status: UNVERIFIED."
+  },
+  {
+    "id": "saas-custom-vs-multitenant-ru",
+    "domain": "business",
+    "language": "ru",
+    "prompt": "Крупный Enterprise-клиент требует кастомную бизнес-логику расчёта тарифов, но мы не можем форкать единое ядро нашего облачного SaaS-продукта.",
+    "hard_constraints": [
+      "Единая кодовая база ядра SaaS без клиентских веток (zero core forks).",
+      "Выполнение специфичных правил расчёта для Enterprise-клиента."
+    ],
+    "disallowed_claims": [
+      "Выполнение произвольного клиентского кода внутри основного процесса безопасно без песочницы."
+    ],
+    "expected_outcome": "eliminate",
+    "required_evidence": ["core immutability", "sandboxed extension boundary", "latency and security limits"],
+    "baseline_red_output": "Придётся пойти на компромисс и добавить if-else ветки под клиента прямо в основной код или сделать отдельный форк.",
+    "skill_green_output": "Разделите систему по структуре (Ядро vs Периферия): сохраните полную неизменность ядра (core immutability), вынеся расчёт тарифов в изолированный плагин-контракт (Wasm-песочница или декларативный движок правил, sandboxed extension boundary). Допущения и проверка: зафиксируйте лимиты времени выполнения и памяти песочницы (latency and security limits) и проверьте отсутствие влияния на других тенантов. Статус: НЕ ПРОВЕРЕНО."
+  },
+  {
+    "id": "aerodynamic-cooling-skin",
+    "domain": "hardware",
+    "language": "en",
+    "prompt": "An autonomous drone needs a large radiator surface to dissipate 2 kW of electronics heat, but protruding radiator fins ruin laminar airflow and battery range.",
+    "hard_constraints": [
+      "Dissipate 2 kW thermal load within safe operating junction temperatures.",
+      "Zero protruding external radiator fins in the aerodynamic stream."
+    ],
+    "disallowed_claims": [
+      "Heat simply disappears without a thermal sink.",
+      "Structural skin cooling works without checking structural material thermal limits."
+    ],
+    "expected_outcome": "eliminate",
+    "required_evidence": ["structural heat-pipe integration", "material thermal limit check", "wind-tunnel or CFD validation"],
+    "baseline_red_output": "We can balance between cooling and drag by using medium-sized fins and throttling the electronics CPU by 40%.",
+    "skill_green_output": "Separate thermal conduction from aerodynamic drag by structure: use structural heat-pipe integration (flush micro-channels embedded inside the drone's outer wing/fuselage skin) so the existing aerodynamic boundary layer cools the skin with zero added frontal area. Assumptions & verification: requires a material thermal limit check on composite epoxy resins and wind-tunnel or CFD validation under hover vs cruise airflow. Status: UNVERIFIED."
+  },
+  {
+    "id": "amdahl-serial-bottleneck",
+    "domain": "software",
+    "language": "en",
+    "prompt": "Our batch job has a 25% strictly sequential single-threaded validation step. Management demands a 10x total speedup solely by scaling from 4 CPU cores to 64 CPU cores without changing the algorithm or input model.",
+    "hard_constraints": [
+      "25% of execution time is strictly sequential and cannot be parallelized under the current algorithm.",
+      "Algorithm and problem size are fixed by requirement."
+    ],
+    "disallowed_claims": [
+      "Adding 64 cores achieves 10x speedup despite a 25% sequential fraction."
+    ],
+    "expected_outcome": "prove-limit",
+    "required_evidence": ["Amdahl bound calculation", "serial fraction assumption", "bypass via algorithm or pipeline change"],
+    "baseline_red_output": "By deploying 64 cores and tuning thread pools, we can achieve the 10x speedup management requested.",
+    "skill_green_output": "Irreducible mathematical limit under stated assumptions (Amdahl bound calculation): with a fixed 25% serial fraction (serial fraction assumption s = 0.25), maximum theoretical speedup as cores -> infinity is 1 / 0.25 = 4.0x (and ~3.8x on 64 cores); 10x is mathematically impossible by core scaling alone. To reach 10x, you must authorize a bypass via algorithm or pipeline change (e.g., pre-validating records incrementally at ingest time or partitioning the validation state so s drops below 8%). Status: ESTABLISHED (for the mathematical bound)."
+  },
+  {
+    "id": "gdpr-right-to-erasure-immutable-ledger",
+    "domain": "software",
+    "language": "en",
+    "prompt": "We must store user events in an append-only cryptographic audit log where hashes cannot be rewritten, AND comply with GDPR Article 17 Right to Erasure when a user requests deletion.",
+    "hard_constraints": [
+      "Cryptographic hash chain of the audit log must remain intact.",
+      "Personal data (PII) of the requesting user must become permanently unreadable upon erasure."
+    ],
+    "disallowed_claims": [
+      "Storing plain PII on an immutable ledger is GDPR-compliant.",
+      "Crypto-shredding is automatically approved without legal/DPO review."
+    ],
+    "expected_outcome": "eliminate",
+    "required_evidence": ["key-per-user encryption", "pointer/payload separation", "DPO legal review"],
+    "baseline_red_output": "We have to compromise: either rewrite the audit log and recalculate all hashes, or keep the PII and hope regulators accept our audit excuse.",
+    "skill_green_output": "Separate the immutable audit structure from the erasable PII via pointer/payload separation and key-per-user encryption: store only pseudonymous event hashes or ciphertexts encrypted with a per-user KMS key in the append-only log, while keeping raw PII in an erasable store (or destroying the per-user encryption key upon erasure request). Assumptions & verification: requires DPO legal review in the target EU jurisdiction to confirm that key destruction plus off-chain PII deletion satisfies GDPR Art. 17. Status: UNVERIFIED."
+  },
+  {
+    "id": "sql-deadlock-stacktrace-debug",
+    "domain": "software",
+    "language": "en",
+    "prompt": "Fix this bug: PostgreSQL throws `ERROR: deadlock detected` because `transfer_funds()` locks `accounts` row A then row B, while `refund_funds()` locks row B then row A.",
+    "hard_constraints": [
+      "Fix the lock ordering bug directly without unnecessary architectural invention."
+    ],
+    "disallowed_claims": [
+      "Physical Contradiction",
+      "Ideal Final Result"
+    ],
+    "expected_outcome": "no-trigger",
+    "required_evidence": ["canonical lock ordering by account_id", "unit test for concurrent transfer"],
+    "baseline_red_output": "Sort the account IDs before acquiring `SELECT ... FOR UPDATE` locks so both functions always lock the smaller `account_id` first.",
+    "skill_green_output": "Scope guardrail (`no-trigger`): this is an ordinary lock-ordering bug, not a systemic TRIZ contradiction. Fix it directly with canonical lock ordering by account_id (`ORDER BY account_id ASC FOR UPDATE`) in both `transfer_funds()` and `refund_funds()`, and add a unit test for concurrent transfer in opposite directions."
+  },
+  {
+    "id": "meta-triz-question-ru",
+    "domain": "meta",
+    "language": "ru",
+    "prompt": "Что такое ТРИЗ и в каком году Генрих Альтшуллер опубликовал первую статью?",
+    "hard_constraints": [
+      "Ответить прямо на информационный вопрос без запуска ТРИЗ-паспорта противоречий."
+    ],
+    "disallowed_claims": [
+      "### 💡 ТРИЗ-Изобретательское Решение",
+      "Физическое противоречие (ФП):"
+    ],
+    "expected_outcome": "no-trigger",
+    "required_evidence": ["historical answer 1956", "Altshuller and Shapiro"],
+    "baseline_red_output": "ТРИЗ — теория решения изобретательских задач. Первая статья Альтшуллера и Шапиро вышла в 1956 году.",
+    "skill_green_output": "ТРИЗ (Теория решения изобретательских задач) — методология системного анализа и разрешения технических противоречий. Первая программная статья Г. С. Альтшуллера и Р. Б. Шапиро «О психологии изобретательского творчества» была опубликована в 1956 году (historical answer 1956, Altshuller and Shapiro)."
+  },
+  {
+    "id": "explicit-user-compromise-request-ru",
+    "domain": "software",
+    "language": "ru",
+    "prompt": "У нас учебный пет-проект на выходные. Не нужно сложных архитектур: мы явно хотим простейший компромисс между свежестью данных и нагрузкой на БД через обычный TTL-кэш в памяти. Подскажи, какой TTL выбрать: 10 секунд или 60 секунд?",
+    "hard_constraints": [
+      "Не навязывать сложную перестройку архитектуры, когда пользователь явно запрашивает выбор мягкого параметра в пет-проекте."
+    ],
+    "disallowed_claims": [
+      "Категорически запрещено использовать TTL-кэш в пет-проекте."
+    ],
+    "expected_outcome": "managed-tradeoff",
+    "required_evidence": ["explicit user authorization", "read-to-write ratio check", "stale read tolerance"],
+    "baseline_red_output": "Для пет-проекта выберите 10–30 секунд в зависимости от того, как часто обновляются данные.",
+    "skill_green_output": "Поскольку вы явно запрашиваете настройку мягкого параметра для учебного проекта (explicit user authorization), усложнять архитектуру не нужно. Выберите TTL на основе проверки соотношения чтений к записям (read-to-write ratio check) и допустимой задержки обновления на экране (stale read tolerance): 10 секунд подходят для интерактивных списков, где пользователь ждёт быстрого отклика после действия (сбросьте кэш при собственной записи пользователя), а 60 секунд — для справочных страниц."
+  },
+  {
+    "id": "zero-downtime-schema-migration",
+    "domain": "software",
+    "language": "en",
+    "prompt": "We must rename and split a `full_name` column into `first_name` and `last_name` on a 500M-row PostgreSQL table while 20 application instances run continuously with zero downtime.",
+    "hard_constraints": [
+      "Zero downtime and zero long table-locking rewrites.",
+      "Old and new application instances coexist during rolling deployment."
+    ],
+    "disallowed_claims": [
+      "ALTER TABLE ... RENAME COLUMN on a live table with old code running causes zero errors without dual-read/write."
+    ],
+    "expected_outcome": "eliminate",
+    "required_evidence": ["expand-and-contract phases", "batched backfill", "rollback safety"],
+    "baseline_red_output": "Schedule a 20-minute maintenance window at 3 AM as a reasonable compromise and run ALTER TABLE.",
+    "skill_green_output": "Separate schema transition in time using expand-and-contract phases: (1) Expand: add nullable `first_name`/`last_name` columns (metadata-only, sub-second) and deploy dual-write triggers/code so both old and new schemas stay in sync; (2) Migrate: run a throttled batched backfill on historical rows with zero long locks; (3) Contract: switch reads to the new columns and drop `full_name` only after all old app instances are retired, preserving rollback safety at every step. Status: UNVERIFIED."
+  },
+  {
+    "id": "serverless-cold-start-ml",
+    "domain": "ai",
+    "language": "en",
+    "prompt": "Our serverless worker needs a 2 GB embedding model loaded in RAM to respond in <50ms, but keeping idle GPU/RAM instances warm 24/7 for sporadic traffic violates our cost ceiling.",
+    "hard_constraints": [
+      "No 24/7 idle compute spend during zero-traffic hours.",
+      "Sub-50ms warm-equivalent startup when a user session begins."
+    ],
+    "disallowed_claims": [
+      "Downloading 2 GB over standard cold network boot takes <10ms without snapshot/mmap tricks."
+    ],
+    "expected_outcome": "eliminate",
+    "required_evidence": ["memory snapshot restore or mmap", "pre-trigger on session start", "tail cold-start benchmark"],
+    "baseline_red_output": "We must balance between cost and latency by keeping 2 instances warm and letting extra bursts wait 15 seconds for cold boot.",
+    "skill_green_output": "Separate initialization in time and structure: combine memory snapshot restore or mmap (Copy-on-Write page mapping from a local NVMe snapshot so only touched tensor pages fault in) with a pre-trigger on session start (emitting a lightweight wakeup event as soon as the user opens the UI/types, 1-2 seconds before hitting submit). Assumptions & verification: run a tail cold-start benchmark to verify page-fault throughput on the target serverless runtime. Status: UNVERIFIED."
+  },
+  {
+    "id": "org-velocity-vs-security-review-ru",
+    "domain": "organization",
+    "language": "ru",
+    "prompt": "Команды разработки требуют деплоить в прод 20 раз в день без ожидания, а отдел ИБ требует обязательной проверки каждого релиза, которая вручную занимает 3 дня.",
+    "hard_constraints": [
+      "Ни один релиз с критическими уязвимостями или нарушением политик не должен попасть в прод.",
+      "Штатные изменения не должны блокироваться на 3 дня в очереди ручного ревью."
+    ],
+    "disallowed_claims": [
+      "Полная отмена проверок безопасности допустима ради скорости.",
+      "Статический анализатор находит 100% логических уязвимостей без ложных срабатываний."
+    ],
+    "expected_outcome": "eliminate",
+    "required_evidence": ["policy-as-code gate", "risk-condition routing", "false-positive audit"],
+    "baseline_red_output": "Давайте найдём баланс: будем делать релизы раз в неделю, а ИБ ускорит ручную проверку до 1 дня.",
+    "skill_green_output": "Разделите контроль безопасности по условию и времени: переведите 90% типовых проверок в автоматический конвейер (policy-as-code gate в CI/CD за 2 минуты), а глубокое ручное ревью ИБ включайте по условию риска (risk-condition routing) — только когда PR затрагивает модули авторизации, криптографии, платежей или меняет внешние права доступа. Допущения и проверка: проведите аудит ложных срабатываний (false-positive audit) и зафиксируйте список защищённых путей в репозитории. Статус: НЕ ПРОВЕРЕНО."
+  },
+  {
+    "id": "thermodynamic-battery-energy-density",
+    "domain": "hardware",
+    "language": "en",
+    "prompt": "Fit 50 kWh of electrical energy into a 5 kg standard lithium-ion battery pack (10,000 Wh/kg) at room temperature without external power tether or fuel.",
+    "hard_constraints": [
+      "5 kg total mass ceiling.",
+      "50 kWh stored energy using standard Li-ion electrochemistry (~250-300 Wh/kg theoretical/practical limit)."
+    ],
+    "disallowed_claims": [
+      "Software BMS tuning increases Li-ion chemical energy density by 35x."
+    ],
+    "expected_outcome": "prove-limit",
+    "required_evidence": ["electrochemical energy density limit", "35x gap calculation", "alternative system or tether option"],
+    "baseline_red_output": "By using an AI-driven battery management system and pulse discharging, we can squeeze 50 kWh out of a 5 kg Li-ion pack.",
+    "skill_green_output": "Irreducible physical/chemical limit (electrochemical energy density limit): commercial and theoretical lithium-ion chemistry is bounded near ~250–400 Wh/kg, meaning a 5 kg pack stores at most ~1.25–2.0 kWh (a 35x gap calculation short of 50 kWh). Software BMS cannot create chemical energy. Within physical law, you must transition to an alternative system or tether option (e.g., continuous power tether, in-field battery swapping separation in time, or hydrocarbon/hydrogen fuel cell). Status: ESTABLISHED (physical limit)."
+  },
+  {
+    "id": "shannon-lossless-random-compression",
+    "domain": "software",
+    "language": "en",
+    "prompt": "Design a lossless compression algorithm that guarantees compressing every possible 1 MB file of uniformly random AES-256 ciphertext down to 100 KB.",
+    "hard_constraints": [
+      "Input is high-entropy uniform ciphertext (arbitrary 1 MB payloads).",
+      "Compression must be 100% lossless and self-contained without pre-shared external dictionaries."
+    ],
+    "disallowed_claims": [
+      "Recursive compression or custom headers can losslessly compress arbitrary random data by 10x."
+    ],
+    "expected_outcome": "prove-limit",
+    "required_evidence": ["pigeonhole principle / Shannon entropy bound", "compress-before-encrypt bypass"],
+    "baseline_red_output": "We can apply Huffman coding followed by LZMA in multiple passes to shrink the encrypted 1 MB payload to 100 KB.",
+    "skill_green_output": "Irreducible mathematical limit (pigeonhole principle / Shannon entropy bound): there are 2^(8,388,608) possible 1 MB files and far fewer 100 KB files; no bijection can losslessly compress arbitrary uniform ciphertext. To achieve the size reduction, apply Strategy 6 (compress-before-encrypt bypass): separate in time by compressing the structured plaintext *before* AES-256 encryption, or deduplicate via content-addressed references if payloads repeat. Status: ESTABLISHED (mathematical bound)."
+  },
+  {
+    "id": "mobile-offline-sync-battery-ru",
+    "domain": "software",
+    "language": "ru",
+    "prompt": "Мобильное приложение курьера должно мгновенно показывать новые заказы (задержка <1 с) И расходовать не более 2% батареи за смену (постоянный polling убивает заряд за 3 часа).",
+    "hard_constraints": [
+      "Задержка доставки уведомления о заказе < 1 с при наличии сети.",
+      "Запрет на высокочастотный фоновый HTTP-polling."
+    ],
+    "disallowed_claims": [
+      "Push-уведомления доставляются со 100% гарантией без резервного механизма сверки."
+    ],
+    "expected_outcome": "eliminate",
+    "required_evidence": ["OS push / coalesced socket", "adaptive state condition", "delta sync fallback"],
+    "baseline_red_output": "Сделаем компромиссный интервал опроса сервера раз в 30 секунд — задержка вырастет, но батарея проживёт дольше.",
+    "skill_green_output": "Разделите канал связи по состоянию и структуре: используйте системный мультиплексированный пуш-канал ОС или единый долгоживущий сокет с аппаратными прерываниями радиомодуля (OS push / coalesced socket) в режиме ожидания, переключаясь на активный обмен по условию состояния (adaptive state condition — только когда экран включён или курьер в статусе «свободен на линии»), плюс дельта-сверку при пробуждении (delta sync fallback). Статус: НЕ ПРОВЕРЕНО."
+  },
+  {
+    "id": "simple-css-button-alignment",
+    "domain": "software",
+    "language": "en",
+    "prompt": "Center a submit button horizontally and vertically inside a `<div class=\"card\">` in CSS.",
+    "hard_constraints": [
+      "Provide a clean CSS snippet directly without TRIZ ceremony."
+    ],
+    "disallowed_claims": [
+      "Physical Contradiction",
+      "Separation in Space"
+    ],
+    "expected_outcome": "no-trigger",
+    "required_evidence": ["display: flex or grid", "place-items: center"],
+    "baseline_red_output": ".card { display: grid; place-items: center; }",
+    "skill_green_output": "Use CSS Grid or Flexbox (`display: flex or grid` with `place-items: center`): `.card { display: grid; place-items: center; }`."
   }
 ]

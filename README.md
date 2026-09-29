@@ -2,169 +2,201 @@
 
 [English](README.md) | [Русский](README.ru.md)
 
+[![CI & Release Verification](https://github.com/torrua/triz-skill/actions/workflows/ci.yml/badge.svg)](https://github.com/torrua/triz-skill/actions/workflows/ci.yml)
+[![Version](https://img.shields.io/badge/version-3.0.0-blue.svg)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-67%20passed%2C%203%20skipped-brightgreen.svg)](#testing)
-[![Platform](https://img.shields.io/badge/platform-Antigravity-blue.svg)](https://github.com/google-deepmind)
+[![Platforms](https://img.shields.io/badge/platforms-Antigravity%20%7C%20Claude%20Code%20%7C%20Claude.ai%20%7C%20Cursor%20%7C%20Codex-blueviolet.svg)](#installation)
 
-> **Core Axiom:** Seek an inventive resolution first; when a hard limit remains, state its evidence and consequences rather than inventing a guarantee.
+> **Core Axiom:** First seek an inventive resolution that improves Parameter $A$ without degrading Parameter $B$. When a hard physical, mathematical, legal, budgetary, or contractual limit remains, state its evidence and consequences rather than inventing a guarantee.
 
 ## What is this?
 
-An AI agent skill that applies **TRIZ (Теория Решения Изобретательских Задач)** — the Theory of Inventive Problem Solving — developed by Genrich Altshuller. It drives the agent through a 5-step **ARIZ-AI pipeline** to seek contradiction-eliminating designs, classify constraints, and distinguish evidence-backed conclusions from hypotheses.
+An AI agent skill that applies **TRIZ (Теория Решения Изобретательских Задач)** — the Theory of Inventive Problem Solving — created by Genrich Altshuller, extended with modern TRIZ heuristics (Zlotin/Zusman, Litvin/Gerasimov, OTSM-TRIZ). It guides the agent through a 5-step **ARIZ-AI pipeline** to eliminate contradictions using existing system resources, classify constraints (`Hard`, `Soft`, `Assumptions`), and separate proven facts from hypotheses.
 
 ## Key Features
 
 | Feature | Description |
 |---|---|
-| 🚫 **Anti-Rationalization Guardrails** | Requires contradiction analysis before an unauthorized trade-off |
-| ⚡ **ARIZ-AI 5-Step Pipeline** | IFR → Physical Contradiction → VPR Audit → 7 Resolution Strategies → Verification |
+| 🚫 **Anti-Rationalization & Scope Guardrails** | Intercepts premature compromises on hard constraints while preventing false triggers on routine bug fixes or DB deadlocks |
+| ⚡ **ARIZ-AI 5-Step Pipeline (with Fast-Path)** | IFR → Physical Contradiction → VPR Audit → 7 Resolution Strategies → Verification |
 | 🔬 **7 Resolution Strategies** | 4 Separation Operators + Satisfy, Bypass, Alternative System (Litvin + Zlotin/Zusman) |
-| 🧭 **Diagnostic Questions** | Zlotin/Zusman navigation: WHERE? WHEN? CONDITION? → instant strategy selection |
-| 📊 **Curated Lookup** | 39 parameters mapped to software/AI/business + 30 candidate principle pairs |
-| 📚 **22 Reference Modules (3 Tiers)** | Progressive context disclosure (Tier 1-2-3) — zero context bloat |
-| 🧬 **Deep ARIZ-85-V Protocols (Tier-3)** | Deterministic algorithms: Full 9-part ARIZ-85-V, MMC, Step Back, Table 2, Trimming, AFD |
-| 🌐 **Multi-Domain** | Software, AI/LLM, Business/Fintech, Physics, Organizations |
-| 🗺️ **Perception Mapping** | Business TRIZ for organizational contradictions and stakeholder conflicts |
-| ⚖️ **Escape Valve** | Honest handling of irreducible constraints (CAP, Amdahl, thermodynamics) |
+| 🧭 **7 Diagnostic Questions** | Zlotin/Zusman + Litvin navigation across Space, Time, Condition, Structure, Satisfy, Bypass, and Alternative System |
+| 📊 **Curated Non-Deterministic Lookup** | 39 parameters mapped to software/AI/business + 30 candidate principle pairs |
+| 📚 **22 Reference Modules (3 Tiers)** | Progressive context disclosure (Tier 1-2-3) — **86–90% token savings** vs. monolithic loading ([Benchmark Report](evals/BENCHMARK_REPORT.md)) |
+| 🧬 **Deep ARIZ-85-V Protocols (Tier-3)** | Step-by-step protocols: Full 9-part ARIZ-85-V, MMC, Step Back from IFR, Table 2, Trimming, AFD |
+| 🌐 **Multi-Domain** | Software Engineering, AI/LLM Agents, Business/Fintech, Physical/Hardware, Organizations |
+| ⚖️ **3-Pass Escape Valve** | Honest handling of irreducible limits across physical laws, mathematical bounds (CAP, Amdahl, Shannon), and legal/budgetary ceilings |
 | 🎯 **Dual-Loop & Three Modes** | Autonomous with Progressive Disclosure (Layer 1 plain default / Layer 2 deep passport), Semi-Automatic, Socratic |
-| 🇷🇺 **Bilingual (EN / RU)** | Canonical Altshuller Russian terminology, bilingual triggers, localized template |
-| 🔍 **Evidence & Risk Traceability** | Output records confidence, validation plan, and residual risks |
-| 📝 **Evaluation Assets** | Reference problems plus blind expert-review cases |
-| ✅ **Portable Validation** | Source checks run locally; deployment parity is an explicit release check |
+| 🇷🇺 **Bilingual (EN / RU)** | Language Adaptation Directive, bilingual frontmatter triggers, canonical Altshuller Russian terminology |
+| 🔍 **Evidence & Risk Traceability** | Output records confidence (`Established`, `Pattern`, `Hypothesis`), verification plan, residual risks, and explicit `UNVERIFIED` vs. `MEASURED` status |
+| 📝 **Evaluation & Trigger Corpus** | 20 multi-outcome cases (`evals/cases.json`) + 40 bilingual trigger prompts (`evals/trigger_corpus.json`) + automated runner (`evals/run_evals.py`) |
+| ✅ **Cross-Platform Tooling & CI** | Zero-dependency Python & PowerShell installers, SHA-256 parity verification, zip packager, and GitHub Actions CI |
 
-## Architecture
+## Architecture & Context Token Budget
 
 The skill follows a 3-tier progressive disclosure model (Tier-1 $\to$ Tier-2 $\to$ Tier-3):
 
-```
+```text
 triz-universal/
-├── SKILL.md                           ← Tier-1: Lightweight dispatcher (~215 lines)
-└── references/                        ← Tier-2: Reference modules (on demand)
+├── SKILL.md                           ← Tier-1: Always-loaded dispatcher (250 lines, ~6.1k tokens)
+└── references/                        ← Tier-2: Foundation modules (loaded on demand, ~2.1k tokens avg)
     ├── README.md                      Navigation index across all tiers
     ├── 01-ikr-ideality.md             Ideal Final Result & Ideality
     ├── 02-contradictions.md           Technical → Physical Contradiction
     ├── 03-separation-principles.md    7 Resolution Strategies (Litvin + Zlotin/Zusman)
     ├── 04-ariz-lite-algorithm.md      ARIZ-AI detailed walkthrough
-    ├── 05-40-principles-catalog.md    40 Inventive Principles (Software + Business)
+    ├── 05-40-principles-catalog.md    40 Inventive Principles (Software + Business + Russian names)
     ├── 06-system-operator-9screens.md 9-Screen System Operator
     ├── 07-resource-audit-vpr.md       VPR Resource Audit catalog
-    ├── 08-multi-domain-lenses.md      Cross-domain mapping + OTSM-TRIZ
+    ├── 08-multi-domain-lenses.md      Cross-domain mapping + OTSM-TRIZ ENV model
     ├── 09-su-field-and-standards.md   Su-Field Analysis & 76 Standards
-    ├── 10-testing-scenarios.md        5 RED/GREEN pressure benchmarks
-    ├── 11-contradiction-matrix.md     Curated 39-parameter lookup
-    ├── 12-evaluation-suite.md         5 reference problems with scoring
+    ├── 10-testing-scenarios.md        5 RED/GREEN pressure benchmarks (offline regression only)
+    ├── 11-contradiction-matrix.md     Curated non-deterministic 39-parameter lookup
+    ├── 12-evaluation-suite.md         5 reference problems with scoring (offline regression only)
     ├── 13-perception-mapping.md       Business TRIZ for organizations
-    ├── SOURCES.md                      Provenance policy
-    ├── CLAIMS.md                       Claim register and evidence levels
-    └── ariz-deep/                     ← Tier-3: Deep Algorithmic Protocols (Level 4–5)
+    ├── SOURCES.md                     Canonical bibliography (editions/pages) & provenance policy
+    ├── CLAIMS.md                      Claim register and confidence levels
+    └── ariz-deep/                     ← Tier-3: Deep Algorithmic Protocols (~3.1k tokens avg)
         ├── 01a-ariz-85v-analysis.md   ARIZ-85-V Parts 1–4: De-specialization, Article-Tool, OT/OZ, Micro-PC
-        ├── 01b-ariz-85v-resolution.md ARIZ-85-V Parts 5–9: Information fund, Deadlock breakout, Verification, Reflection
+        ├── 01b-ariz-85v-resolution.md ARIZ-85-V Parts 5–9: Information fund, Deadlock breakout, Verification
         ├── 02-mmc-operator-protocol.md Modeling with Little People (MMC) role-prompting algorithm
-        ├── 03-step-back-from-ifr.md    Step Back from IFR: Synthesis of assembly, deployment, cold start
-        ├── 04-physical-contradiction-tree.md Table 2 Decision Tree: Particle rules 8–10, Phase shifts, Vacuum
-        ├── 05-trimming-algorithm.md    Functional Trimming Protocol: Rules A, B, and C
+        ├── 03-step-back-from-ifr.md   Step Back from IFR: Synthesis of deployment & cold start
+        ├── 04-physical-contradiction-tree.md Table 2 Decision Tree: Particle rules 8–10, Phase shifts, Void
+        ├── 05-trimming-algorithm.md   Functional Trimming Protocol: Rules A, B, and C
         └── 06-subversion-analysis-afd.md Anticipatory Failure Determination (AFD / Subversion analysis)
 ```
 
-**Why a 3-tier architecture?** Loading all TRIZ theory into context at once wastes tokens and causes "lost in the middle" degradation. The dispatcher `SKILL.md` is always loaded in working memory. Reference modules (Tier-2) are fetched for standard tasks, while deep protocols (Tier-3) are consulted only for Level 4–5 deadlocks, deep microscopic modeling, or adversarial verification.
+| Layer | Files | Lines | Estimated Tokens | Typical Turn Usage |
+|---|---:|---:|---:|---|
+| **Tier-1 (`SKILL.md`)** | 1 | 250 | ~6,142 | Always loaded in active skill context (**89.8% smaller** than full corpus) |
+| **Tier-2 (`references/*.md`)** | 15 | 2,004 | ~32,206 | 0–1 module loaded on demand (~2,147 tokens/module) |
+| **Tier-3 (`references/ariz-deep/*.md`)** | 7 | 1,667 | ~21,985 | Loaded only for Level 4–5 deadlocks (~3,141 tokens/module) |
+
+See [evals/BENCHMARK_REPORT.md](evals/BENCHMARK_REPORT.md) for full token and trigger measurements.
 
 ## Installation
 
-### For Antigravity (Google Gemini)
+### 1. Cross-Platform Installer (Recommended — Python 3.10+)
 
-Copy to your global skills directory:
+Install directly into your target agent's global skill directory and verify SHA-256 parity:
 
 ```bash
-# Linux / macOS
+# Google Antigravity (~/.gemini/config/skills/triz-universal)
+python scripts/sync_deployment.py --mode apply --platform antigravity
+
+# Claude Code (~/.claude/skills/triz-universal)
+python scripts/sync_deployment.py --mode apply --platform claude-code
+
+# Cursor (~/.cursor/skills/triz-universal)
+python scripts/sync_deployment.py --mode apply --platform cursor
+
+# OpenAI Codex CLI (~/.codex/skills/triz-universal)
+python scripts/sync_deployment.py --mode apply --platform codex
+
+# Custom or project-local path (e.g., .claude/skills/triz-universal)
+python scripts/sync_deployment.py --mode apply --destination "/path/to/.claude/skills/triz-universal"
+```
+
+### 2. Claude.ai (Web & Desktop App)
+
+Build the single-file skill archive and upload `dist/triz-universal-v3.0.0.zip` in **Claude.ai → Settings → Capabilities / Skills**:
+
+```bash
+python scripts/sync_deployment.py --package-zip
+```
+
+### 3. Manual Copy / PowerShell
+
+```bash
+# Linux / macOS (Antigravity or Claude Code)
 cp -r triz-universal/ ~/.gemini/config/skills/triz-universal/
+cp -r triz-universal/ ~/.claude/skills/triz-universal/
 
 # Windows (PowerShell)
-Copy-Item -Recurse triz-universal\ "$env:USERPROFILE\.gemini\config\skills\triz-universal\"
+.\scripts\sync-deployment.ps1 -Mode Apply -Destination "$env:USERPROFILE\.gemini\config\skills\triz-universal"
 ```
 
-### For other AI agent frameworks
+## Example: Before vs. After (Layer 1 & Layer 2)
 
-The skill is a set of Markdown files. Copy `triz-universal/` into your agent's skill/prompt directory and configure triggers for keywords like `TRIZ`, `contradiction`, `trade-off`, `bottleneck`, `deadlock`.
+**Prompt:**
+> *"Our C++ trading core has a strict `<5 µs` order execution budget. Regulators demand logging every internal state transition, but writing logs to NVMe disk takes `45 µs`. How do we design this?"*
 
-## How It Works
+### ❌ Without Skill (Typical LLM Compromise)
+> *"Since disk writes take 45 µs and your budget is 5 µs, a trade-off is unavoidable. A reasonable compromise is to sample 1% of orders for logging, or buffer logs in standard heap memory and flush every 5 seconds, accepting a slight compliance risk."*
 
-When you present the agent with a problem like:
+### ✅ With `triz-universal` — Layer 1 (Default Plain-Language Output)
+> **Solution (Decouple Memory Capture from Disk Flush):**
+> Instead of formatting and writing logs to disk on the trading thread, have the trading thread write a fixed 64-byte binary struct into a pre-allocated, lock-free shared-memory ring buffer (`mmap` / `io_uring`) using a single atomic pointer increment (`~10–30 ns`). Pin a separate background worker thread to an isolated CPU core that continuously drains the ring buffer to NVMe disk outside the critical trading path.
+>
+> **Assumptions, Residual Limits & Verification:**
+> - *Assumptions & Limits:* Assumes an isolated CPU core is available. If server power fails instantaneously before the background thread flushes the ring buffer, the last few milliseconds of in-flight records can be lost unless backed by NVRAM/UPS.
+> - *How to verify:* Benchmark p99.9 order path latency under peak burst load (`<5 µs` target) and verify ring-buffer sizing prevents overflow during NVMe GC pauses.
+>
+> *“Would you like a detailed breakdown of how the TRIZ algorithm arrived at this solution (including the contradiction, resources, and inventive principles used)?”*
 
-> *"Our API needs sub-10ms latency AND full ACID consistency for analytics queries"*
+### ✅ With `triz-universal` — Layer 2 (Professional TRIZ Passport, on request)
+```markdown
+### 💡 TRIZ Inventive Resolution
+- **Physical Contradiction:** Telemetry I/O must occur synchronously on every state change (to satisfy regulatory completeness) AND must NOT occur on the order thread (to preserve the <5 µs latency ceiling).
+- **Diagnostic Path:** WHEN / STRUCTURE
+- **Strategy Applied:** Separation in Time & Structure
+- **Inventive Principle(s) Used:** Principle #10 (Preliminary Action — pre-allocated ring buffer), Principle #24 (Intermediary — shared-memory ring buffer between hot thread and kernel/NVMe)
+- **Resource Mobilized (VPR):** Idle isolated CPU core, OS shared-memory page mapping (`mmap` / `io_uring`), 64-byte CPU cache line alignment
+- **Resolution:** Hot thread writes a raw 64-byte struct to a lock-free ring buffer in ~20 ns; a dedicated background core flushes pages to NVMe asynchronously.
+- **Evidence & Confidence:** Pattern (`C-IOURING-01` in CLAIMS.md) — well-established low-latency architecture; exact p99.9 depends on hardware and kernel tuning.
+- **Verification Plan:** Baseline: 45 µs synchronous write. Experiment: replay 1M orders/sec peak burst on isolated cores. Threshold: p99.9 hot-path overhead < 100 ns, zero dropped ring-buffer frames. Suggested verification role: Systems Performance Engineer.
+- **Residual Risks:** Unflushed ring-buffer tail on catastrophic power loss (mitigate via battery-backed NVRAM or synchronous replication before external ACK).
+- **Verified Outcome:** Status: UNVERIFIED (conditional expected outcome: <100 ns hot-path impact with 100% state-transition capture under stated hardware assumptions).
+```
 
-Instead of saying *"Let's find a reasonable balance..."*, the TRIZ skill forces the agent to:
+## When NOT to Use & Limitations
 
-1. **Classify constraints** — distinguish non-negotiable invariants from targets and assumptions.
-2. **Frame the IFR** — use the ideal result as a search direction, not an unsupported promise.
-3. **Sharpen the Physical Contradiction** — "The data access path must be lock-free for reads AND locked for the inventory invariant."
-4. **Audit resources (VPR)** — assess availability, cost, permissions, and reliability of page cache, WAL, and idle CPU.
-5. **Apply Separation** — create a design, then state its consistency, cost, and operational implications.
-6. **Verify** — define baseline, measurable thresholds, evidence, and residual risks.
+`triz-universal` is a specialized contradiction-resolution framework, **not** a general-purpose coding assistant.
 
-## Testing
+### When NOT to Use
+- **Routine Bugs & Lock-Ordering Deadlocks:** If PostgreSQL throws `deadlock detected` because Transaction A locks Row 1 then Row 2 while Transaction B locks Row 2 then Row 1, fix the lock acquisition order (`ORDER BY id`). Do not invent a new architecture.
+- **Single-Metric Profiling Bottlenecks:** Optimizing an $O(N^2)$ loop or adding a missing SQL index involves no opposing constraint degradation.
+- **Simple Prototypes & Explicit Trade-Offs:** When a user explicitly wants a quick 30-second TTL cache for a weekend prototype, forcing a zero-compromise architecture is over-engineering.
+- **Meta-Questions:** Asking *"What is TRIZ?"* or linting a TRIZ file will not trigger a contradiction passport.
 
-Run the portable source test suite:
+### Known Limitations
+1. **Token & Latency Overhead:** Loading `SKILL.md` adds ~6.1k tokens to the system context, and running the 5-step ARIZ-AI loop adds ~400–900 reasoning tokens.
+2. **Not a Substitute for Empirical or Legal Validation:** An LLM cannot measure latency, prove hardware thermal limits, or grant GDPR/KYC regulatory approval. All outputs default to `Status: UNVERIFIED` until validated by domain engineers or legal counsel.
+3. **Stochastic Model Compliance:** While `evals/run_evals.py` verifies trigger rules and reference outputs, live model behavior depends on the underlying LLM's reasoning capability. See [evals/BENCHMARK_REPORT.md](evals/BENCHMARK_REPORT.md).
+
+## Testing & Evaluation
+
+Run the portable test suite and the evaluation runner (requires only Python 3.10+ standard library):
 
 ```bash
+# 1. Run structural, version-parity, security, and regression tests
 python tests/test_triz_skill.py
+
+# 2. Run token budget, 40-prompt trigger accuracy, and 20-case rubric evaluations
+python evals/run_evals.py
 ```
 
-Tests cover:
-- YAML metadata and standards compliance
-- Reference file integrity and cross-links
-- Anti-rationalization guardrails
-- ARIZ-AI pipeline formulation
-- All 12 audit fixes verification
-- RED/GREEN pressure benchmark evaluation
-- constraint classification, evidence, verification, and risk reporting
-- provenance and claim registers
-- behavioral-evaluation assets distinct from phrase-based linting
+> **Note on Active Deployment Tests (`TRIZ_DEPLOY_DIR`):** `tests/test_triz_skill.py` includes 3 deployment-parity tests in `TestActiveDeployment` that compare the repository source against an installed copy via SHA-256. When running source tests without `TRIZ_DEPLOY_DIR` set, those 3 tests are skipped by design. Set `TRIZ_DEPLOY_DIR` (as CI does automatically) to run all tests with 0 skipped:
+> ```bash
+> TRIZ_DEPLOY_DIR=~/.gemini/config/skills/triz-universal python tests/test_triz_skill.py
+> ```
 
-To check or synchronize an installed copy, provide its explicit destination:
+## Release History
 
-```powershell
-.\scripts\sync-deployment.ps1 -Mode Check -Destination "C:\path\to\triz-universal"
-.\scripts\sync-deployment.ps1 -Mode Apply -Destination "C:\path\to\triz-universal"
-```
-
-## Roadmap
-
-### v1.0.0
-- ✅ ARIZ-AI 5-step pipeline
-- ✅ Anti-compromise guardrails with Red Flags
-- ✅ 10 reference modules covering core TRIZ
-- ✅ 5 multi-domain pressure benchmarks (RED/GREEN)
-- ✅ 39 automated tests
-- ✅ Escape valve for irreducible constraints
+See [CHANGELOG.md](CHANGELOG.md) for the full release history (`v1.0.0` → `v3.0.0`).
 
 ### v3.0.0 (Current Release)
-- ✅ **Dual-Loop Execution:** Strict separation between internal methodological reasoning (always 100% TRIZ under the hood) and external user-facing delivery
-- ✅ **Progressive Disclosure Architecture:** Layer 1 Plain-Language Core by default (solution-first, zero TRIZ jargon, intuitive analogies) + Layer 2 Professional TRIZ Passport
-- ✅ **Contextual Follow-Up & Routing Guardrails:** Contextual closing invitation with format exceptions (JSON/code/minimal), preventing false triggers on meta-mentions of "TRIZ"
-- ✅ **Hardened Tier-3 Canonical Protocols:** Restructured ARIZ-85-V Parts 1-4 with canonical MMC, Step Back from IFR, and Table 2 cross-references
-- ✅ **70 Automated Unit Tests:** 67 passed, 3 skipped, full verification across all tiers and output layers
-
-### v2.2.0
-- ✅ **Tier-3 Deep Algorithmic Protocols:** 7 dedicated executable step-by-step protocols in `references/ariz-deep/` (ARIZ-85-V Parts 1-9, MMC Operator, Step Back from IFR, Table 2 Tree, Trimming, AFD)
-- ✅ **3-Tier Context Architecture:** Tier-1 Dispatcher (<250 lines), Tier-2 Foundation Modules (15 files), Tier-3 Algorithmic Protocols (7 files)
-- ✅ **Quick Decision Tree Routing:** Routing rows in SKILL.md for deep ARIZ-85-V deadlock resolution
-
-### v2.1.0
-- ✅ Curated, explicitly non-deterministic contradiction lookup
-- ✅ Inventive principles mapped to each separation operator
-- ✅ Evaluation suite with 5 reference solutions and pass/fail scoring
-- ✅ Reasoning traceability — diagnostic path and principle selection logged in output
-- ✅ Litvin + Zlotin/Zusman dual strategy sets (Satisfy, Bypass, Alternative System)
-- ✅ Semi-automatic mode (between Autonomous and Socratic)
-- ✅ Perception Mapping for organizational/people contradictions
-- ✅ Constraint classification, provenance, and release synchronization
+- ✅ **Dual-Loop Progressive Disclosure:** Layer 1 Plain-Language Core (covering all 3 valid outcomes: contradiction eliminated, proven limit, or authorized soft trade-off) + Layer 2 Professional TRIZ Passport
+- ✅ **Hardened Guardrails & Escape Valve:** Bilingual positive/negative triggers in `description`, `When NOT to Use` scope filter, 3-pass Escape Valve distinguishing physical laws, mathematical bounds (CAP, Amdahl, Shannon), and legal/budgetary limits
+- ✅ **Canonical Sources & Claims:** Exact editions and page ranges in `SOURCES.md`, clean-room notice, and 10 formal claims in `CLAIMS.md`
+- ✅ **Evaluation & Trigger Benchmark Suite:** 20 multi-domain cases (`evals/cases.json`), 40 bilingual trigger prompts (`evals/trigger_corpus.json`), automated runner (`evals/run_evals.py`), and [Benchmark Report](evals/BENCHMARK_REPORT.md)
+- ✅ **Cross-Platform CI & Packaging:** GitHub Actions CI across Linux/Windows/macOS, `scripts/sync_deployment.py`, `CONTRIBUTING.md`, `SECURITY.md`, and `CITATION.cff`
 
 ## Acknowledgments
 
-- **Genrich Altshuller** — creator of TRIZ methodology
-- **truinorva/triz-skills** — comprehensive Claude TRIZ skill library (inspiration for matrix lookups and dual strategy sets)
-- **Heinrich: The Inventing Machine** — evaluation suite and traceability concepts
-- **jenson500/triz-prompt-engineering (ccTOPP)** — XML prompt engineering for TRIZ
+- **Genrich Altshuller (Г. С. Альтшуллер)** — creator of TRIZ, ARIZ-85-V, and the 40 Inventive Principles
+- **B. Zlotin, A. Zusman, S. Litvin, V. Gerasimov, N. Khomenko** — diagnostic questions, Satisfy/Bypass operators, Trimming, AFD, and OTSM-TRIZ ENV model
+- **truinorva/triz-skills**, **Heinrich: The Inventing Machine**, and **jenson500/triz-prompt-engineering (ccTOPP)** — conceptual inspiration (all content in this repository is original clean-room work; see [SOURCES.md](triz-universal/references/SOURCES.md))
 
 ## License
 
