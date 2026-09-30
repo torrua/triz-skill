@@ -3,7 +3,7 @@
 [English](README.md) | [Русский](README.ru.md)
 
 [![CI & Release Verification](https://github.com/torrua/triz-skill/actions/workflows/ci.yml/badge.svg)](https://github.com/torrua/triz-skill/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-3.0.0-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-3.1.0-blue.svg)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Platforms](https://img.shields.io/badge/platforms-Antigravity%20%7C%20Claude%20Code%20%7C%20Claude.ai%20%7C%20Cursor%20%7C%20Codex-blueviolet.svg)](#установка)
 
@@ -29,7 +29,7 @@
 | 🎯 **Двухконтурность и три режима работы** | Автономный с прогрессивным раскрытием (Layer 1 простыми словами / Layer 2 ТРИЗ-паспорт), Полуавтоматический (с неинтерактивным фолбэком), Сократический |
 | 🇷🇺 **Двуязычность (RU / EN)** | Директива адаптации языка в Tier-1, двуязычные триггеры в `description`, каноническая терминология Альтшуллера |
 | 🔍 **Трассируемость доказательств и статуса проверки** | Классификация ограничений, тип исхода, уровни уверенности (`Факт`, `Паттерн`, `Гипотеза`), план верификации, остаточные риски и явный статус `НЕ ПРОВЕРЕНО` vs `ИЗМЕРЕНО` |
-| 📝 **Корпус оценки и триггеров** | 20 задач по 4 типам исходов (`evals/cases.json`) + 40 промптов проверки триггеров (`evals/trigger_corpus.json`) + вынесенные бенчмарки (`evals/10-testing-scenarios.md`, `evals/12-evaluation-suite.md`) + скрипт `evals/run_evals.py` |
+| 📝 **Слепой контур оценивания и триггеров** | 20 задач по 5 типам исходов (`evals/cases.json`) + 105 критериев (`evals/judge_criteria.json`) + слепой оценщик `evals/live_eval.py` + 40 промптов проверки триггеров (`evals/trigger_corpus.json`) + офлайн-самопроверка `evals/run_evals.py` |
 | ✅ **Кроссплатформенная инфраструктура и CI** | Скрипты синхронизации на Python и PowerShell, сверка по SHA-256, сборка zip-архива для Claude.ai и шаблон GitHub Actions CI |
 
 ## Архитектура и бюджет токенов
@@ -97,7 +97,7 @@ python scripts/sync_deployment.py --mode apply --destination "/path/to/.claude/s
 
 ### 2. Claude.ai (Веб-версия и настольное приложение)
 
-Соберите чистый архив `dist/triz-universal-v3.0.0.zip` для загрузки в **Claude.ai → Settings → Capabilities / Skills**:
+Соберите чистый архив `dist/triz-universal-v3.1.0.zip` для загрузки в **Claude.ai → Settings → Capabilities / Skills**:
 
 ```bash
 python scripts/sync_deployment.py --package-zip
@@ -187,14 +187,17 @@ python evals/live_eval.py validate-criteria
 
 ## История версий
 
-Полная история изменений в формате Keep a Changelog доступна в [CHANGELOG.md](CHANGELOG.md) (`v1.0.0` → `v3.0.0`).
+Полная история изменений в формате Keep a Changelog доступна в [CHANGELOG.md](CHANGELOG.md) (`v1.0.0` → `v3.1.0`).
 
-### v3.0.0 (Текущий релиз)
-- ✅ **Двухконтурное прогрессивное раскрытие:** Уровень 1 (Layer 1 — простыми словами для всех допустимых исходов: устранение противоречия, доказанный/условный предел, авторизованный мягкий компромисс) + Уровень 2 (Layer 2 — ТРИЗ-паспорт)
-- ✅ **Усиленные барьеры и предохранительный клапан:** Двуязычные позитивные и негативные триггеры в `description`, раздел `When NOT to Use`, 3-проходный Escape Valve с разделением физических законов, математических теорем (CAP, Амдал, Шеннон) и юридических/бюджетных рамок
+### v3.1.0 (Текущий релиз)
+- ✅ **Слепой multi-judge конвейер оценки живых моделей (`evals/live_eval.py`):** Устойчивая к перефразированию оценка (`prepare`, `score`, `validate-criteria`) по 105 смысловым критериям `must`/`avoid` (`evals/judge_criteria.json`), промпт слепого судьи (`evals/judge_prompt.md`), проверка цитат, голосование строгого большинства, коэффициент согласия Каппа Коэна ($\kappa$), 95% доверительные интервалы Уилсона и точный двусторонний критерий знаков Макнемара
+- ✅ **Предметные и математические исправления эталонов (`evals/cases.json`):** Выверена математика фильтра Блума/кукушки для 16 МБ (`memory-latency-budget`), разведены базы сравнения 1 ядро vs. 4 ядра по закону Амдала (`amdahl-serial-bottleneck`), введён класс исхода `conditional` с обязательным jurisdiction gate (`regulated-onboarding`), а явный запрос на простой выбор TTL кэша переведён в `no-trigger` (`explicit-user-compromise-request-ru`)
+- ✅ **Расширенное тестовое покрытие (`tests/test_live_eval.py`):** 20 специализированных тестов для `live_eval.py` в дополнение к 88 структурным и регрессионным тестам в `tests/test_triz_skill.py`
+
+### v3.0.0
+- ✅ **Двухконтурное прогрессивное раскрытие:** Уровень 1 (Layer 1 — простыми словами) + Уровень 2 (Layer 2 — ТРИЗ-паспорт, `Step 0` → `Step 5`, Pre-Commitment Rule, режим `[AUDIT]`)
+- ✅ **Усиленные барьеры и предохранительный клапан:** Двуязычные позитивные и негативные триггеры в `description`, очищенный список `metadata.triggers`, раздел `When NOT to Use` и 3-проходный Escape Valve
 - ✅ **Каноническая база источников и утверждений:** Точные издания и страницы в `SOURCES.md`, уведомление о чистой разработке (clean-room) и 10 формализованных утверждений в `CLAIMS.md`
-- ✅ **Слепой multi-judge конвейер оценки и триггеров:** 20 мультидоменных кейсов (`evals/cases.json`), 105 критериев (`evals/judge_criteria.json`), слепой рандомизированный оценщик (`evals/live_eval.py` + `evals/judge_prompt.md`), 40 двуязычных промптов проверки триггеров (`evals/trigger_corpus.json`), офлайн-скрипт `evals/run_evals.py` и [Отчёт о замерах](evals/BENCHMARK_REPORT.md)
-- ✅ **Кроссплатформенный CI и релизная инфраструктура:** Шаблон CI (`scripts/github-actions-ci.yml`), `scripts/sync_deployment.py`, `CONTRIBUTING.md`, `SECURITY.md`, `CITATION.cff`
 
 ## Благодарности
 

@@ -1077,10 +1077,10 @@ class TestVersionAndDocConsistency(unittest.TestCase):
 
     def test_version_synchronized_across_all_docs(self):
         version = (ROOT_DIR / "VERSION").read_text(encoding="utf-8").strip()
-        self.assertEqual(version, "3.0.0")
+        self.assertEqual(version, "3.1.0")
 
         changelog = (ROOT_DIR / "CHANGELOG.md").read_text(encoding="utf-8")
-        for ver in ["3.0.0", "2.2.0", "2.1.1", "2.1.0", "2.0.0", "1.0.0"]:
+        for ver in ["3.1.0", "3.0.0", "2.2.0", "2.1.1", "2.1.0", "2.0.0", "1.0.0"]:
             self.assertIn(f"## [{ver}]", changelog, f"Version [{ver}] missing from CHANGELOG.md")
 
         readme_en = (ROOT_DIR / "README.md").read_text(encoding="utf-8")

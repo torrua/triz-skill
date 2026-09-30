@@ -5,6 +5,22 @@ All notable changes to `triz-universal` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.0] - 2026-09-30
+
+### Added
+- **Blinded Multi-Judge Live Evaluation Harness (`evals/live_eval.py`):** Paraphrase-tolerant evaluation pipeline (`prepare`, `score`, `validate-criteria`) for real LLM outputs (`baseline` vs. `skill`) with strict completeness validation (zero silent fallbacks), cryptographically salted randomized item generation (`judge_items.jsonl` + `judge_key.json`), verbatim quote checking against response text, strict majority multi-judge aggregation, **Cohen's $\kappa$** inter-judge agreement, **Wilson 95% confidence intervals**, and exact two-sided **McNemar/sign test** $p$-values.
+- **Paraphrase-Tolerant Criteria & Blinded Judge Prompt (`evals/judge_criteria.json`, `evals/judge_prompt.md`):** 105 semantic `must` / `avoid` criteria (`critical: true | false`) with deterministic `hard_fail_patterns` and `anchors` across all 20 evaluation cases.
+- **Dedicated Live-Eval Unit Test Suite (`tests/test_live_eval.py`):** 20 unit and end-to-end tests covering criteria validation, strict input loading, deterministic checks, statistical bounds, blinded shuffling, SHA-256 tamper protection, and multi-judge majority scoring.
+- **Reference Corpus Patch Utility (`evals/reference_fixes.json`, `evals/apply_reference_fixes.py`):** Reproducible patcher for reference corpus corrections.
+
+### Changed
+- **Domain & Mathematical Accuracy Fixes in `evals/cases.json`:**
+  - `memory-latency-budget` (`managed-tradeoff`): Corrected Bloom/Cuckoo filter capacity math (~19/17 bits/key at 0.01% FP holds ~7–8M keys or ~4–5 minutes of traffic in 16 MB at 28k events/s), identifying the deduplication time window as the parameter requiring product-owner authorization.
+  - `amdahl-serial-bottleneck` (`prove-limit`): Explicitly separated the single-core baseline ($1/0.25 = 4\times$ ceiling, $\approx 3.8\times$ on 64 cores; requires $s \le 8.6\%$ for $10\times$) from the current 4-core deployment baseline ($\approx 1.67\times$ on 64 cores with a $\approx 1.75\times$ ceiling; requires $s \le 1\%$ for $10\times$).
+  - `regulated-onboarding` (`conditional`): Reclassified from `prove-limit` to `conditional` with a mandatory jurisdiction gate (some regimes allow deferred CDD before funding/transfer, others require it before account opening) and privacy/consent review for device/SIM/IP telemetry.
+  - `explicit-user-compromise-request-ru` (`no-trigger`): Reclassified from `managed-tradeoff` to `no-trigger` with `hard_fail_patterns` rejecting any TRIZ passport when a user asks for a simple weekend-prototype TTL choice.
+- **Separated Offline Self-Test from Live Evaluation (`evals/run_evals.py`):** Removed `--responses-file` silent fallback from `run_evals.py`; `run_evals.py` now serves strictly as the offline self-test of the reference corpus, token budget, and trigger routing rules.
+
 ## [3.0.0] - 2026-09-29
 
 ### Added
@@ -16,7 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Scope & Trigger Guardrails:** Explicit `When NOT to Use` section, negative trigger rules in `SKILL.md` frontmatter (`description`), and pruned `metadata.triggers` (removing generic words like `deadlock`, `bottleneck`, `trade-off`, `contradiction`) to prevent false activation.
 - **Language Adaptation Directive & Non-Interactive Fallback:** Tier-1 rule requiring responses to match the user's prompt language alongside a single-turn / batch API fallback for `Semi-Automatic Mode`.
 - **Canonical Source Bibliography & Expanded Claim Register:** Added exact editions, publishers, and page ranges to `references/SOURCES.md` (`TRIZ-ALT-79`, `TRIZ-ALT-86`, `TRIZ-ZZ-89`, `TRIZ-ZZ-01`, `TRIZ-LIT-91`, `TRIZ-OTSM-00`, `CS-CAP-02`, `CS-AMDAHL-67`) plus clean-room provenance notice and expanded `references/CLAIMS.md` (`C-CAP-01`, `C-AMDAHL-01`, `C-BLOOM-01`, `C-IOURING-01`, `C-RLHF-01`).
-- **Expanded Evaluation, Live-Eval Harness & Trigger Corpus:** 20 multi-domain evaluation cases in `evals/cases.json` (covering `eliminate`, `prove-limit`, `conditional`, `managed-tradeoff`, and `no-trigger`), 105 paraphrase-tolerant `must`/`avoid` criteria in `evals/judge_criteria.json`, blinded judge template `evals/judge_prompt.md`, live multi-judge evaluation harness `evals/live_eval.py` (`prepare`, `score`, `validate-criteria` with strict validation, quote checking, Cohen's kappa, Wilson 95% CIs, and exact two-sided McNemar/sign test), 40 bilingual trigger test prompts in `evals/trigger_corpus.json`, offline self-test runner `evals/run_evals.py`, and published `evals/BENCHMARK_REPORT.md`.
+- **Expanded Evaluation & Trigger Corpus:** 20 multi-domain evaluation cases in `evals/cases.json`, 40 bilingual trigger test prompts in `evals/trigger_corpus.json`, automated evaluation & token budget runner `evals/run_evals.py`, and published `evals/BENCHMARK_REPORT.md`.
 - **Cross-Platform Tooling, CI Template & Release Packaging:** Added CI workflow template `scripts/github-actions-ci.yml`, cross-platform `scripts/sync_deployment.py` (with `--package-zip` support for Claude.ai), `CONTRIBUTING.md`, `SECURITY.md`, and `CITATION.cff`.
 
 ### Changed

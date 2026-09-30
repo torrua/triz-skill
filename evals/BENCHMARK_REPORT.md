@@ -1,6 +1,6 @@
-# `triz-universal` v3.0.0 — Evaluation, Trigger & Context Token Benchmark Report
+# `triz-universal` v3.1.0 — Evaluation, Trigger & Context Token Benchmark Report
 
-> **Reproducibility:** Run `python evals/run_evals.py` from the repository root to recompute all metrics below from the live source tree.
+> **Reproducibility:** Run `python evals/run_evals.py` and `python evals/live_eval.py validate-criteria` from the repository root to recompute all metrics below from the live source tree.
 
 ---
 
@@ -68,12 +68,12 @@ Honest engineering requires documenting where forcing TRIZ is counterproductive:
 
 1. **Routine Bug Fixing & Lock-Ordering Deadlocks (`sql-deadlock-stacktrace-debug`):**
    - *How TRIZ hurts if misapplied:* If an agent treats a classic AB/BA mutex deadlock in application code as an "inventive contradiction" and proposes event-sourcing or striped counters instead of sorting lock acquisition order (`ORDER BY account_id`), it introduces massive accidental complexity.
-   - *Mitigation in v3.0.0:* Explicit negative triggers in `SKILL.md` frontmatter, pruned `metadata.triggers`, Section 1 (`When NOT to Use This Skill`), and deterministic `hard_fail_patterns` in `evals/judge_criteria.json`.
+   - *Mitigation in v3.1.0:* Explicit negative triggers in `SKILL.md` frontmatter, pruned `metadata.triggers`, Section 1 (`When NOT to Use This Skill`), and deterministic `hard_fail_patterns` in `evals/judge_criteria.json`.
 2. **Simple Prototypes & Explicit Compromise Requests (`explicit-user-compromise-request-ru`):**
    - *How TRIZ hurts if misapplied:* When a developer building a weekend prototype explicitly asks whether to use a 10s or 60s TTL cache, refusing to answer and lecturing them on CDC/MVCC wastes time and tokens.
-   - *Mitigation in v3.0.0:* Classified as `no-trigger` in both `evals/cases.json` and `evals/judge_criteria.json` (with `hard_fail_patterns` rejecting any TRIZ passport output).
+   - *Mitigation in v3.1.0:* Classified as `no-trigger` in both `evals/cases.json` and `evals/judge_criteria.json` (with `hard_fail_patterns` rejecting any TRIZ passport output).
 3. **Jurisdiction-Dependent Regulatory Problems (`regulated-onboarding`):**
    - *How TRIZ hurts if misapplied:* Treating "defer KYC until withdrawal" as a universal Separation-in-Time triumph violates AML/CDD regimes that require identity verification before establishing a customer relationship, and treating device/SIM signals as "free VPR" ignores GDPR/ePrivacy consent rules.
-   - *Mitigation in v3.0.0:* Classified as `conditional` outcome requiring a mandatory jurisdiction gate, legal sign-off on the state machine, and privacy review for telemetry.
+   - *Mitigation in v3.1.0:* Classified as `conditional` outcome requiring a mandatory jurisdiction gate, legal sign-off on the state machine, and privacy review for telemetry.
 4. **Reasoning Latency & Token Overhead on Trivial Tasks:**
    - Running the ARIZ-AI pipeline adds ~400–900 internal reasoning tokens and ~6.6k system prompt tokens. For straightforward CRUD or single-metric optimizations where no opposing constraint degrades, standard coding skills are faster and cheaper.

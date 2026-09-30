@@ -7,8 +7,8 @@ authors:
     name: "torrua"
 repository-code: "https://github.com/torrua/triz-skill"
 license: MIT
-version: 3.0.0
-date-released: "2026-09-29"
+version: 3.1.0
+date-released: "2026-09-30"
 keywords:
   - TRIZ
   - ARIZ-85-V

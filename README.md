@@ -3,7 +3,7 @@
 [English](README.md) | [Русский](README.ru.md)
 
 [![CI & Release Verification](https://github.com/torrua/triz-skill/actions/workflows/ci.yml/badge.svg)](https://github.com/torrua/triz-skill/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-3.0.0-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-3.1.0-blue.svg)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Platforms](https://img.shields.io/badge/platforms-Antigravity%20%7C%20Claude%20Code%20%7C%20Claude.ai%20%7C%20Cursor%20%7C%20Codex-blueviolet.svg)](#installation)
 
@@ -29,7 +29,7 @@ An AI agent skill that applies **TRIZ (Теория Решения Изобре�
 | 🎯 **Dual-Loop & Three Modes** | Autonomous with Progressive Disclosure (Layer 1 plain default / Layer 2 deep passport), Semi-Automatic (with non-interactive fallback), Socratic |
 | 🇷🇺 **Bilingual (EN / RU)** | Language Adaptation Directive, bilingual frontmatter triggers, canonical Altshuller Russian terminology |
 | 🔍 **Evidence & Risk Traceability** | Output records constraint classes, outcome type, confidence (`Established`, `Pattern`, `Hypothesis`), verification plan, residual risks, and explicit `UNVERIFIED` vs. `MEASURED` status |
-| 📝 **Evaluation & Trigger Corpus** | 20 multi-outcome cases (`evals/cases.json`) + 40 bilingual trigger prompts (`evals/trigger_corpus.json`) + quarantined benchmark suites (`evals/10-testing-scenarios.md`, `evals/12-evaluation-suite.md`) + automated runner (`evals/run_evals.py`) |
+| 📝 **Blinded Live-Eval & Trigger Suite** | 20 multi-outcome cases (`evals/cases.json`) + 105 paraphrase-tolerant criteria (`evals/judge_criteria.json`) + blinded multi-judge evaluator (`evals/live_eval.py`) + 40 bilingual trigger prompts (`evals/trigger_corpus.json`) + offline self-test (`evals/run_evals.py`) |
 | ✅ **Cross-Platform Tooling & CI** | Zero-dependency Python & PowerShell installers, SHA-256 parity verification, zip packager, and GitHub Actions CI template |
 
 ## Architecture & Context Token Budget
@@ -97,7 +97,7 @@ python scripts/sync_deployment.py --mode apply --destination "/path/to/.claude/s
 
 ### 2. Claude.ai (Web & Desktop App)
 
-Build the single-file skill archive and upload `dist/triz-universal-v3.0.0.zip` in **Claude.ai → Settings → Capabilities / Skills**:
+Build the single-file skill archive and upload `dist/triz-universal-v3.1.0.zip` in **Claude.ai → Settings → Capabilities / Skills**:
 
 ```bash
 python scripts/sync_deployment.py --package-zip
@@ -187,14 +187,17 @@ python evals/live_eval.py validate-criteria
 
 ## Release History
 
-See [CHANGELOG.md](CHANGELOG.md) for the full release history (`v1.0.0` → `v3.0.0`).
+See [CHANGELOG.md](CHANGELOG.md) for the full release history (`v1.0.0` → `v3.1.0`).
 
-### v3.0.0 (Current Release)
-- ✅ **Dual-Loop Progressive Disclosure:** Layer 1 Plain-Language Core (covering all valid outcomes: contradiction eliminated, proven/conditional limit, or authorized soft trade-off) + Layer 2 Professional TRIZ Passport
-- ✅ **Hardened Guardrails & Escape Valve:** Bilingual positive/negative triggers in `description`, `When NOT to Use` scope filter, 3-pass Escape Valve distinguishing physical laws, mathematical bounds (CAP, Amdahl, Shannon), and legal/budgetary limits
+### v3.1.0 (Current Release)
+- ✅ **Blinded Multi-Judge Live Evaluation Harness (`evals/live_eval.py`):** Paraphrase-tolerant live evaluation (`prepare`, `score`, `validate-criteria`) with 105 `must`/`avoid` criteria (`evals/judge_criteria.json`), blinded judge template (`evals/judge_prompt.md`), verbatim quote verification, strict majority voting, Cohen's $\kappa$, Wilson 95% CIs, and exact two-sided McNemar sign tests
+- ✅ **Domain & Mathematical Reference Fixes (`evals/cases.json`):** Corrected Bloom/Cuckoo capacity math (`memory-latency-budget`), separated 1-core vs. 4-core Amdahl baselines (`amdahl-serial-bottleneck`), added `conditional` outcome with jurisdiction gate (`regulated-onboarding`), and reclassified explicit prototype TTL requests to `no-trigger` (`explicit-user-compromise-request-ru`)
+- ✅ **Expanded Test Coverage (`tests/test_live_eval.py`):** 20 dedicated unit and end-to-end tests for `live_eval.py` alongside the 88 structural and regression tests in `tests/test_triz_skill.py`
+
+### v3.0.0
+- ✅ **Dual-Loop Progressive Disclosure:** Layer 1 Plain-Language Core + Layer 2 Professional TRIZ Passport (`Step 0` → `Step 5`, Pre-Commitment Rule, `[AUDIT]` mode)
+- ✅ **Hardened Guardrails & Escape Valve:** Bilingual positive/negative triggers in `description`, pruned `metadata.triggers`, `When NOT to Use`, and 3-pass Escape Valve
 - ✅ **Canonical Sources & Claims:** Exact editions and page ranges in `SOURCES.md`, clean-room notice, and 10 formal claims in `CLAIMS.md`
-- ✅ **Live-Eval Multi-Judge Harness & Trigger Suite:** 20 multi-domain cases (`evals/cases.json`), 105 paraphrase-tolerant criteria (`evals/judge_criteria.json`), blinded multi-judge evaluator (`evals/live_eval.py` + `evals/judge_prompt.md`), 40 bilingual trigger prompts (`evals/trigger_corpus.json`), offline self-test (`evals/run_evals.py`), and [Benchmark Report](evals/BENCHMARK_REPORT.md)
-- ✅ **Cross-Platform CI & Packaging:** CI template (`scripts/github-actions-ci.yml`), `scripts/sync_deployment.py`, `CONTRIBUTING.md`, `SECURITY.md`, and `CITATION.cff`
 
 ## Acknowledgments
 

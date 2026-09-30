@@ -1,6 +1,6 @@
 # Master Research Plan & Roadmap: Universal TRIZ Skill for AI Agents
 
-> **Status:** v3.0.0 implemented; source validation, token budget benchmarks, and trigger evaluation corpus complete; multi-model blind human evaluation protocol published in `evals/`.  
+> **Status:** v3.1.0 implemented; source validation, token budget benchmarks, trigger evaluation corpus, and blinded multi-judge live evaluation harness (`evals/live_eval.py`) complete.  
 > **Methodology:** Classical & Modern TRIZ + Advanced Agent Skill Engineering (3-Tier Architecture)  
 > **Directives Applied:** `/goal` (Goal Rigor), `/grill-me` (Stress-Testing Assumptions), `/boost` (Max Depth & Engineering Precision)
 
