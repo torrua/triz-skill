@@ -16,8 +16,9 @@ Thank you for your interest in improving `triz-universal`! Because this skill en
 Before opening a Pull Request, run the full verification suite (requires only Python 3.10+ standard library):
 
 ```bash
-# 1. Run unit and structural integrity tests
+# 1. Run unit, structural integrity, and live-eval harness tests
 python tests/test_triz_skill.py
+python tests/test_live_eval.py
 
 # 2. Run offline token budget, trigger accuracy, and reference corpus self-tests
 python evals/run_evals.py

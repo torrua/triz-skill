@@ -311,13 +311,14 @@ class TestBehavioralEvaluationAssets(unittest.TestCase):
 
     def test_live_eval_prepare_and_score_workflow(self):
         live_eval_script = ROOT_DIR / "evals" / "live_eval.py"
+        live_eval_tests = ROOT_DIR / "tests" / "test_live_eval.py"
         criteria_file = ROOT_DIR / "evals" / "judge_criteria.json"
         prompt_file = ROOT_DIR / "evals" / "judge_prompt.md"
         self.assertTrue(live_eval_script.is_file(), "evals/live_eval.py must exist")
+        self.assertTrue(live_eval_tests.is_file(), "tests/test_live_eval.py must exist")
         self.assertTrue(criteria_file.is_file(), "evals/judge_criteria.json must exist")
         self.assertTrue(prompt_file.is_file(), "evals/judge_prompt.md must exist")
 
-        # 1. Validate criteria CLI
         res_val = subprocess.run(
             [sys.executable, str(live_eval_script), "validate-criteria"],
             capture_output=True,
@@ -327,93 +328,13 @@ class TestBehavioralEvaluationAssets(unittest.TestCase):
         self.assertEqual(res_val.returncode, 0, res_val.stderr)
         self.assertIn("OK: 20 cases have valid criteria", res_val.stdout)
 
-        # 2. Test strict validation (missing pairs without --allow-partial must error, never silently fall back)
-        cases = json.loads((ROOT_DIR / "evals" / "cases.json").read_text(encoding="utf-8"))
-        criteria = json.loads(criteria_file.read_text(encoding="utf-8"))["cases"]
-        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp_dir:
-            tmp = Path(tmp_dir)
-            partial_resp = tmp / "partial.json"
-            partial_resp.write_text(
-                json.dumps([
-                    {"model": "test-m", "case_id": "distributed-inventory-consistency", "arm": "baseline", "run": 1, "output": "baseline text"},
-                ]),
-                encoding="utf-8",
-            )
-            res_fail = subprocess.run(
-                [sys.executable, str(live_eval_script), "prepare", "--responses", str(partial_resp), "--out", str(tmp / "out")],
-                capture_output=True,
-                text=True,
-                encoding="utf-8",
-            )
-            self.assertNotEqual(res_fail.returncode, 0, "Missing pairs without --allow-partial must fail strictly")
-
-            # 3. End-to-end prepare + score across all 20 cases with 2 judges
-            full_rows = []
-            for c in cases:
-                full_rows.append({
-                    "model": "test-model",
-                    "case_id": c["id"],
-                    "arm": "baseline",
-                    "run": 1,
-                    "output": c["baseline_red_output"],
-                })
-                full_rows.append({
-                    "model": "test-model",
-                    "case_id": c["id"],
-                    "arm": "skill",
-                    "run": 1,
-                    "output": c["skill_green_output"],
-                })
-            full_resp = tmp / "full_responses.json"
-            full_resp.write_text(json.dumps(full_rows, ensure_ascii=False, indent=2), encoding="utf-8")
-
-            out_dir = tmp / "blinded"
-            res_prep = subprocess.run(
-                [sys.executable, str(live_eval_script), "prepare", "--responses", str(full_resp), "--out", str(out_dir), "--seed", "42"],
-                capture_output=True,
-                text=True,
-                encoding="utf-8",
-            )
-            self.assertEqual(res_prep.returncode, 0, res_prep.stderr)
-            key_data = json.loads((out_dir / "judge_key.json").read_text(encoding="utf-8"))
-            self.assertEqual(len(key_data["items"]), 40)
-
-            # Build 2 judge verdict files (baseline fails critical criteria; skill satisfies all criteria)
-            judge1_lines, judge2_lines = [], []
-            for iid, meta in key_data["items"].items():
-                cid = meta["case_id"]
-                is_skill = meta["arm"] == "skill"
-                v1, v2 = [], []
-                for crit in criteria[cid]["criteria"]:
-                    v1.append({"criterion_id": crit["id"], "satisfied": is_skill, "evidence": "verified by judge 1"})
-                    v2.append({"criterion_id": crit["id"], "satisfied": is_skill, "evidence": "verified by judge 2"})
-                judge1_lines.append(json.dumps({"item_id": iid, "verdicts": v1}))
-                judge2_lines.append(json.dumps({"item_id": iid, "verdicts": v2}))
-
-            j1_path = tmp / "judge1.jsonl"
-            j2_path = tmp / "judge2.jsonl"
-            j1_path.write_text("\n".join(judge1_lines) + "\n", encoding="utf-8")
-            j2_path.write_text("\n".join(judge2_lines) + "\n", encoding="utf-8")
-
-            report_out = tmp / "live_report.md"
-            res_score = subprocess.run(
-                [
-                    sys.executable, str(live_eval_script), "score",
-                    "--responses", str(full_resp),
-                    "--key", str(out_dir / "judge_key.json"),
-                    "--verdicts", str(j1_path),
-                    "--verdicts", str(j2_path),
-                    "--out", str(report_out),
-                ],
-                capture_output=True,
-                text=True,
-                encoding="utf-8",
-            )
-            self.assertEqual(res_score.returncode, 0, res_score.stderr)
-            report_text = report_out.read_text(encoding="utf-8")
-            self.assertIn("95% CI (Wilson)", report_text)
-            self.assertIn("exact sign test p =", report_text)
-            self.assertIn("Cohen's kappa", report_text)
+        res_suite = subprocess.run(
+            [sys.executable, str(live_eval_tests)],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+        )
+        self.assertEqual(res_suite.returncode, 0, f"tests/test_live_eval.py failed:\n{res_suite.stderr}\n{res_suite.stdout}")
 
     def test_evaluation_guide_requires_blinded_expert_review(self):
         guide = ROOT_DIR / "evals" / "README.md"

@@ -12,6 +12,7 @@ Run the offline self-test and criteria validator from the repository root:
 ```bash
 python evals/run_evals.py
 python evals/live_eval.py validate-criteria
+python tests/test_live_eval.py
 ```
 
 This verifies:

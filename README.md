@@ -169,8 +169,9 @@ cp -r triz-universal/ ~/.claude/skills/triz-universal/
 Run the portable test suite, offline self-test, and live-eval criteria validator (requires only Python 3.10+ standard library):
 
 ```bash
-# 1. Run structural, version-parity, security, and live-eval workflow unit tests
+# 1. Run structural, version-parity, security, and live-eval unit tests (88 + 20 tests)
 python tests/test_triz_skill.py
+python tests/test_live_eval.py
 
 # 2. Run token budget, 40-prompt trigger accuracy, and 20-case offline self-tests
 python evals/run_evals.py
