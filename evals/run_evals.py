@@ -204,9 +204,22 @@ def score_case_response(case: dict, response_text: str) -> dict:
     }
 
 
-def evaluate_cases_corpus() -> dict:
-    """Run rubric evaluation across all 20 cases in evals/cases.json."""
+def evaluate_cases_corpus(external_responses_path: Path | None = None) -> dict:
+    """
+    Run rubric evaluation across all 20 cases in evals/cases.json.
+    By default evaluates the reference RED/GREEN outputs embedded in evals/cases.json
+    (deterministic offline regression mode). If --responses-file is passed, evaluates
+    external model outputs keyed by case id.
+    """
     cases = json.loads(CASES_FILE.read_text(encoding="utf-8"))
+    external_map = {}
+    if external_responses_path is not None:
+        raw_ext = json.loads(external_responses_path.read_text(encoding="utf-8"))
+        if isinstance(raw_ext, list):
+            external_map = {item["id"]: item for item in raw_ext}
+        elif isinstance(raw_ext, dict):
+            external_map = raw_ext
+
     red_passes = 0
     green_passes = 0
     by_outcome: dict[str, dict[str, int]] = {}
@@ -217,8 +230,12 @@ def evaluate_cases_corpus() -> dict:
         by_outcome.setdefault(outcome, {"total": 0, "red_pass": 0, "green_pass": 0})
         by_outcome[outcome]["total"] += 1
 
-        red_score = score_case_response(case, case["baseline_red_output"])
-        green_score = score_case_response(case, case["skill_green_output"])
+        ext_entry = external_map.get(case["id"], {})
+        red_text = ext_entry.get("baseline_output", case["baseline_red_output"])
+        green_text = ext_entry.get("skill_output", case["skill_green_output"])
+
+        red_score = score_case_response(case, red_text)
+        green_score = score_case_response(case, green_text)
 
         if red_score["passed"]:
             red_passes += 1
@@ -230,6 +247,7 @@ def evaluate_cases_corpus() -> dict:
             failures.append((case["id"], green_score))
 
     return {
+        "mode": "external_live_outputs" if external_responses_path else "reference_regression_corpus",
         "total_cases": len(cases),
         "red_passes": red_passes,
         "green_passes": green_passes,
@@ -239,11 +257,28 @@ def evaluate_cases_corpus() -> dict:
 
 
 def main() -> int:
+    import argparse
+
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
+    parser = argparse.ArgumentParser(description="Run triz-universal token budget, trigger, and rubric evaluations.")
+    parser.add_argument(
+        "--responses-file",
+        type=Path,
+        default=None,
+        help="Optional path to JSON file containing external live model outputs keyed by case id.",
+    )
+    args = parser.parse_args()
+
     budgets = measure_token_budgets()
     triggers = evaluate_trigger_corpus()
-    cases_eval = evaluate_cases_corpus()
+    cases_eval = evaluate_cases_corpus(args.responses_file)
+
+    tier2_lines = sum(f["lines"] for f in budgets["tier2_files"])
+    tier2_bytes = sum(f["bytes"] for f in budgets["tier2_files"])
+    tier3_lines = sum(f["lines"] for f in budgets["tier3_files"])
+    tier3_bytes = sum(f["bytes"] for f in budgets["tier3_files"])
 
     print("=== 1. Context Token Budget Analysis ===")
     print(
@@ -251,12 +286,12 @@ def main() -> int:
         f"{budgets['tier1']['bytes']} bytes | ~{budgets['tier1']['tokens']} tokens"
     )
     print(
-        f"Tier-2 ({budgets['tier2_count']} modules): total ~{budgets['tier2_total_tokens']} tokens | "
-        f"avg ~{budgets['tier2_avg_tokens']} tokens/module"
+        f"Tier-2 ({budgets['tier2_count']} modules): {tier2_lines} lines | {tier2_bytes} bytes | "
+        f"total ~{budgets['tier2_total_tokens']} tokens | avg ~{budgets['tier2_avg_tokens']} tokens/module"
     )
     print(
-        f"Tier-3 ({budgets['tier3_count']} deep protocols): total ~{budgets['tier3_total_tokens']} tokens | "
-        f"avg ~{budgets['tier3_avg_tokens']} tokens/protocol"
+        f"Tier-3 ({budgets['tier3_count']} deep protocols): {tier3_lines} lines | {tier3_bytes} bytes | "
+        f"total ~{budgets['tier3_total_tokens']} tokens | avg ~{budgets['tier3_avg_tokens']} tokens/protocol"
     )
     print(
         f"Typical Turn Budget (Tier-1 + 1 Tier-2 module): ~{budgets['typical_turn_tier1_plus_1_ref']} tokens "
@@ -275,7 +310,7 @@ def main() -> int:
         f"Layer Routing Accuracy: {triggers['layer_accuracy']*100:.1f}%"
     )
 
-    print("\n=== 3. Behavioral Rubric Evaluation (20 Cases) ===")
+    print(f"\n=== 3. Behavioral Rubric Evaluation (20 Cases, mode={cases_eval['mode']}) ===")
     print(
         f"Total Cases: {cases_eval['total_cases']} | "
         f"Baseline (RED) Pass Rate: {cases_eval['red_passes']}/{cases_eval['total_cases']} | "
@@ -303,3 +338,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+

@@ -199,7 +199,7 @@ class TestReliabilityContract(unittest.TestCase):
         self.assertIn("curated heuristic lookup", content)
 
     def test_kyc_benchmark_requires_jurisdiction_and_consent_review(self):
-        content = (REFS_DIR / "10-testing-scenarios.md").read_text(encoding="utf-8")
+        content = (ROOT_DIR / "evals" / "10-testing-scenarios.md").read_text(encoding="utf-8")
         self.assertIn("Jurisdiction gate", content)
         self.assertIn("privacy/consent review", content)
         self.assertNotIn("100% compliance and fraud protection", content)
@@ -222,7 +222,7 @@ class TestReleaseTooling(unittest.TestCase):
     @unittest.skipUnless(shutil.which("powershell"), "PowerShell is required for deployment sync test")
     def test_deployment_sync_apply_creates_a_byte_identical_copy(self):
         script = ROOT_DIR / "scripts" / "sync-deployment.ps1"
-        with tempfile.TemporaryDirectory(dir=ROOT_DIR) as temporary_root:
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as temporary_root:
             destination = Path(temporary_root) / "triz-universal"
             result = subprocess.run(
                 [
@@ -248,7 +248,7 @@ class TestReleaseTooling(unittest.TestCase):
 
     def test_python_deployment_sync_and_zip_packaging(self):
         py_script = ROOT_DIR / "scripts" / "sync_deployment.py"
-        with tempfile.TemporaryDirectory(dir=ROOT_DIR) as temporary_root:
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as temporary_root:
             destination = Path(temporary_root) / "triz-universal"
             zip_out = Path(temporary_root) / "triz-universal-test.zip"
             res_apply = subprocess.run(
@@ -327,6 +327,7 @@ class TestAntiRationalizationGuardrails(unittest.TestCase):
         self.assertIn("trade-offs are inevitable", content)
         self.assertIn("FORBIDDEN", content)
         self.assertIn("VIOLATION OF IFR", content)
+        self.assertIn("Exception — Acceptable Standard Solution", content)
 
     def test_red_flags_list_present(self):
         content = SKILL_FILE.read_text(encoding="utf-8")
@@ -338,10 +339,11 @@ class TestAntiRationalizationGuardrails(unittest.TestCase):
 
 
 class TestArizAiPipelineFormulation(unittest.TestCase):
-    """Verifies that the canonical 5-step ARIZ-AI pipeline is strictly structured."""
+    """Verifies that the canonical ARIZ-AI pipeline (Step 0 through Step 5) is strictly structured."""
 
     def test_all_five_steps_defined(self):
         content = SKILL_FILE.read_text(encoding="utf-8")
+        self.assertIn("Step 0: Constraint Classification & Known-Limit Pre-Check", content)
         self.assertIn("Step 1: Mini-Problem & Ideal Final Result", content)
         self.assertIn("Step 2: Sharpen the Physical Contradiction", content)
         self.assertIn("Step 3: Substance-Field Resource Audit", content)
@@ -364,11 +366,14 @@ class TestArizAiPipelineFormulation(unittest.TestCase):
         content = SKILL_FILE.read_text(encoding="utf-8")
         self.assertIn("Output Delivery Template", content)
         self.assertIn("### 💡 TRIZ Inventive Resolution", content)
+        self.assertIn("- **Constraint Classification:**", content)
+        self.assertIn("- **Outcome Type:**", content)
         self.assertIn("- **Physical Contradiction:**", content)
         self.assertIn("- **Strategy Applied:**", content)
         self.assertIn("- **Diagnostic Path:**", content)
         self.assertIn("- **Inventive Principle(s) Used:**", content)
         self.assertIn("- **Resource Mobilized (VPR):**", content)
+        self.assertIn("- **Expected Outcome & Verification Status:**", content)
 
 
 class TestMultiDomainLenses(unittest.TestCase):
@@ -567,8 +572,8 @@ class TestPressureBenchmarksEvaluationHarness(unittest.TestCase):
         self.assertTrue(eval_green["is_green"], f"GREEN response must pass: {eval_green}")
 
     def test_all_scenarios_in_file_evaluated(self):
-        """Directly parses references/10-testing-scenarios.md and validates all RED and GREEN scenarios."""
-        scenarios_file = REFS_DIR / "10-testing-scenarios.md"
+        """Directly parses evals/10-testing-scenarios.md and validates all RED and GREEN scenarios."""
+        scenarios_file = ROOT_DIR / "evals" / "10-testing-scenarios.md"
         content = scenarios_file.read_text(encoding="utf-8")
         scenarios = re.split(r"\n## Pressure Scenario \d+:\s*", content)[1:]
         self.assertEqual(len(scenarios), 5, f"Expected 5 benchmark scenarios in file, got {len(scenarios)}")
@@ -652,13 +657,13 @@ class TestAuditFixes12(unittest.TestCase):
             self.assertIn("Freemium", content)
 
     def test_fix_3_scenario_3_pressures_and_red_baseline(self):
-        for path in skill_paths("references/10-testing-scenarios.md"):
-            content = path.read_text(encoding="utf-8")
-            self.assertIn("## Pressure Scenario 3:", content)
-            scen3_part = content.split("## Pressure Scenario 3:")[1].split("## Pressure Scenario 4:")[0]
-            self.assertIn("### Pressures Applied:", scen3_part)
-            self.assertIn("### Baseline Failure (RED - Without Skill):", scen3_part)
-            self.assertIn("### Compliant Resolution (GREEN - With `triz-universal`):", scen3_part)
+        path = ROOT_DIR / "evals" / "10-testing-scenarios.md"
+        content = path.read_text(encoding="utf-8")
+        self.assertIn("## Pressure Scenario 3:", content)
+        scen3_part = content.split("## Pressure Scenario 3:")[1].split("## Pressure Scenario 4:")[0]
+        self.assertIn("### Pressures Applied:", scen3_part)
+        self.assertIn("### Baseline Failure (RED - Without Skill):", scen3_part)
+        self.assertIn("### Compliant Resolution (GREEN - With `triz-universal`):", scen3_part)
 
     def test_fix_4_operational_modes_section(self):
         for path in skill_paths("SKILL.md"):
@@ -699,20 +704,25 @@ class TestAuditFixes12(unittest.TestCase):
             self.assertIn("### Step 4: Apply", content)  # Step 4 name (v1: 4 Separation Operators, v2: Resolution Strategies)
 
     def test_fix_8_renamed_testing_scenarios_and_links(self):
-        self.assertTrue((REFS_DIR / "10-testing-scenarios.md").is_file())
+        self.assertTrue((ROOT_DIR / "evals" / "10-testing-scenarios.md").is_file())
+        self.assertTrue((ROOT_DIR / "evals" / "12-evaluation-suite.md").is_file())
+        self.assertFalse((REFS_DIR / "10-testing-scenarios.md").exists())
+        self.assertFalse((REFS_DIR / "12-evaluation-suite.md").exists())
         self.assertFalse((REFS_DIR / "testing-scenarios.md").exists())
         if CONFIG_SKILL_DIR is not None:
-            self.assertTrue((CONFIG_SKILL_DIR / "references" / "10-testing-scenarios.md").is_file())
-            self.assertFalse((CONFIG_SKILL_DIR / "references" / "testing-scenarios.md").exists())
+            self.assertFalse((CONFIG_SKILL_DIR / "references" / "10-testing-scenarios.md").exists())
+            self.assertFalse((CONFIG_SKILL_DIR / "references" / "12-evaluation-suite.md").exists())
 
         for skill_path in skill_paths("SKILL.md"):
             content = skill_path.read_text(encoding="utf-8")
-            self.assertIn("references/10-testing-scenarios.md", content)
+            self.assertNotIn("references/10-testing-scenarios.md", content)
+            self.assertNotIn("references/12-evaluation-suite.md", content)
             self.assertNotIn("references/testing-scenarios.md", content)
 
         for readme_path in skill_paths("references/README.md"):
             content = readme_path.read_text(encoding="utf-8")
-            self.assertIn("10-testing-scenarios.md", content)
+            self.assertNotIn("10-testing-scenarios.md", content)
+            self.assertNotIn("12-evaluation-suite.md", content)
             self.assertNotIn("[testing-scenarios.md", content)
 
     def test_fix_9_escape_valve_irreducible_constraint(self):
@@ -744,7 +754,7 @@ class TestAuditFixes12(unittest.TestCase):
             ("06-system-operator-9screens.md", "07-resource-audit-vpr.md"),
             ("07-resource-audit-vpr.md", "08-multi-domain-lenses.md"),
             ("08-multi-domain-lenses.md", "09-su-field-and-standards.md"),
-            ("09-su-field-and-standards.md", "10-testing-scenarios.md"),
+            ("09-su-field-and-standards.md", "11-contradiction-matrix.md"),
         ]
         for curr_file, next_file in chain:
             for base_dir in [path.parent for path in skill_paths("references/README.md")]:
@@ -760,11 +770,15 @@ class TestV2Features(unittest.TestCase):
     """Tests for v2.0.0 features: new files, strategies, modes, and traceability."""
 
     def test_new_reference_files_exist(self):
-        for name in ["11-contradiction-matrix.md", "12-evaluation-suite.md", "13-perception-mapping.md"]:
+        for name in ["11-contradiction-matrix.md", "13-perception-mapping.md"]:
             self.assertTrue(
                 (REFS_DIR / name).is_file(),
                 f"New reference file {name} missing from references/",
             )
+        self.assertTrue(
+            (ROOT_DIR / "evals" / "12-evaluation-suite.md").is_file(),
+            "evals/12-evaluation-suite.md must exist outside triz-universal/",
+        )
 
     def test_contradiction_matrix_has_39_parameters(self):
         content = (REFS_DIR / "11-contradiction-matrix.md").read_text(encoding="utf-8")
@@ -783,7 +797,7 @@ class TestV2Features(unittest.TestCase):
         self.assertIn("not a complete reproduction", content)
 
     def test_evaluation_suite_has_5_problems(self):
-        content = (REFS_DIR / "12-evaluation-suite.md").read_text(encoding="utf-8")
+        content = (ROOT_DIR / "evals" / "12-evaluation-suite.md").read_text(encoding="utf-8")
         for i in range(1, 6):
             self.assertIn(f"## Problem {i}:", content)
         self.assertIn("Scoring Criteria", content)
@@ -830,6 +844,7 @@ class TestV2Features(unittest.TestCase):
         content = SKILL_FILE.read_text(encoding="utf-8")
         self.assertIn("Semi-Automatic Mode", content)
         self.assertIn("three execution modes", content)
+        self.assertIn("Non-Interactive / Single-Turn Fallback", content)
 
     def test_reasoning_trace_in_output_template(self):
         content = SKILL_FILE.read_text(encoding="utf-8")
@@ -840,12 +855,12 @@ class TestV2Features(unittest.TestCase):
     def test_extended_decision_tree(self):
         content = SKILL_FILE.read_text(encoding="utf-8")
         self.assertIn("11-contradiction-matrix.md", content)
-        self.assertIn("12-evaluation-suite.md", content)
         self.assertIn("13-perception-mapping.md", content)
+        self.assertNotIn("12-evaluation-suite.md", content)
 
-    def test_references_readme_lists_all_13_files(self):
+    def test_references_readme_lists_all_foundation_files(self):
         content = (REFS_DIR / "README.md").read_text(encoding="utf-8")
-        for i in range(1, 14):
+        for i in [1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 13]:
             prefix = f"{i:02d}-" if i <= 9 else f"{i}-"
             self.assertIn(prefix, content, f"Reference {prefix}* missing from README index")
 
@@ -865,7 +880,6 @@ class TestMultilingualRussianSupport(unittest.TestCase):
         triggers = meta.get("triggers", [])
         for expected in [
             "ТРИЗ",
-            "противоречие",
             "физическое противоречие",
             "техническое противоречие",
             "идеальный конечный результат",
@@ -881,6 +895,8 @@ class TestMultilingualRussianSupport(unittest.TestCase):
         content = SKILL_FILE.read_text(encoding="utf-8")
         self.assertIn("Шаблон вывода на русском языке", content)
         self.assertIn("### 💡 ТРИЗ-Изобретательское Решение", content)
+        self.assertIn("- **Классификация ограничений:**", content)
+        self.assertIn("- **Тип исхода:**", content)
         self.assertIn("- **Физическое противоречие (ФП):**", content)
         self.assertIn("- **Диагностический путь:**", content)
         self.assertIn("- **Примененная стратегия:**", content)
@@ -890,7 +906,7 @@ class TestMultilingualRussianSupport(unittest.TestCase):
         self.assertIn("- **Доказательная база и уверенность:**", content)
         self.assertIn("- **План верификации:**", content)
         self.assertIn("- **Остаточные риски:**", content)
-        self.assertIn("- **Проверенный результат:**", content)
+        self.assertIn("- **Ожидаемый результат и статус проверки:**", content)
 
     def test_all_40_principles_have_canonical_russian_names(self):
         catalog = (REFS_DIR / "05-40-principles-catalog.md").read_text(encoding="utf-8")
@@ -1136,7 +1152,40 @@ class TestSkillMdAuditFixesV3(unittest.TestCase):
         content = SKILL_FILE.read_text(encoding="utf-8")
         self.assertNotIn("Need deterministic contradiction matrix lookup", content)
         self.assertIn("Need curated heuristic contradiction lookup (non-deterministic)", content)
-        self.assertIn("Offline Maintainer & Regression Assets (DO NOT load during live problem-solving)", content)
+        self.assertIn("Offline Maintainer & Regression Assets (Moved Outside Skill Directory)", content)
+        self.assertFalse((REFS_DIR / "10-testing-scenarios.md").exists())
+        self.assertFalse((REFS_DIR / "12-evaluation-suite.md").exists())
+        self.assertTrue((ROOT_DIR / "evals" / "10-testing-scenarios.md").is_file())
+        self.assertTrue((ROOT_DIR / "evals" / "12-evaluation-suite.md").is_file())
+
+    def test_metadata_triggers_have_no_generic_false_positive_words(self):
+        content = SKILL_FILE.read_text(encoding="utf-8")
+        meta, _ = parse_frontmatter(content)
+        triggers = meta.get("triggers", [])
+        for forbidden_generic in [
+            "trade-off",
+            "deadlock",
+            "bottleneck",
+            "contradiction",
+            "latency vs memory",
+            "unsolvable problem",
+            "противоречие",
+        ]:
+            self.assertNotIn(
+                forbidden_generic,
+                triggers,
+                f"Generic false-positive trigger '{forbidden_generic}' must not be in metadata.triggers",
+            )
+
+    def test_no_inline_latex_dollar_signs_in_skill_md(self):
+        content = SKILL_FILE.read_text(encoding="utf-8")
+        self.assertNotIn("$", content, "SKILL.md must contain zero LaTeX '$' symbols")
+
+    def test_audit_mode_and_pre_commitment_rule_defined(self):
+        content = SKILL_FILE.read_text(encoding="utf-8")
+        self.assertIn("[AUDIT]", content)
+        self.assertIn("--audit", content)
+        self.assertIn("Pre-Commitment Rule (Anti-Post-Hoc)", content)
 
     def test_sources_and_claims_completed_with_canonical_editions(self):
         sources = (REFS_DIR / "SOURCES.md").read_text(encoding="utf-8")
@@ -1154,4 +1203,5 @@ class TestSkillMdAuditFixesV3(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+
 

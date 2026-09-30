@@ -90,5 +90,5 @@ When analyzing a system bottleneck:
 
 ---
 
-**Next:** [10-testing-scenarios.md](10-testing-scenarios.md) — Testing & Pressure Verification Suites.  
+**Next:** [11-contradiction-matrix.md](11-contradiction-matrix.md) — Curated Contradiction Lookup & Parameter Mapping.  
 **Index:** [README.md](README.md)

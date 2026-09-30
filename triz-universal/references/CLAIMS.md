@@ -41,4 +41,4 @@ Every Layer 2 passport (and every high-impact recommendation) must state:
 3. **Residual Risks:** Irreducible limits, failure modes, operating cost, privacy/compliance obligations, and supersystem dependencies.
 4. **Verified Outcome Status:** Explicitly labeled `UNVERIFIED (Expected effect under stated assumptions)` unless empirical benchmark results were provided.
 
-**Related:** [SOURCES.md](SOURCES.md) and [10-testing-scenarios.md](10-testing-scenarios.md).
+**Related:** [SOURCES.md](SOURCES.md) and [11-contradiction-matrix.md](11-contradiction-matrix.md).

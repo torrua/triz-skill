@@ -6,9 +6,9 @@ Thank you for your interest in improving `triz-universal`! Because this skill en
 
 1. **No Fabricated Guarantees:** Never add examples or rules that claim "100% compliance", "zero memory overhead", or "measured speedup" without stating the boundary assumptions and required verification.
 2. **Respect Context Token Budgets:**
-   - `triz-universal/SKILL.md` (Tier-1 dispatcher) must remain under **300 lines** (~2,600 tokens).
+   - `triz-universal/SKILL.md` (Tier-1 dispatcher) must remain under **300 lines** (~6,600 tokens).
    - Every reference file in `triz-universal/references/` (Tier-2 and Tier-3) must remain under **500 lines**.
-3. **Quarantine Offline Benchmarks:** Benchmark scenarios (`10-testing-scenarios.md`), reference problem solutions (`12-evaluation-suite.md`), and evaluation corpora (`evals/`) must never be injected into the active problem-solving routing table in `SKILL.md` to prevent answer-key anchoring.
+3. **Quarantine Offline Benchmarks:** Benchmark scenarios (`evals/10-testing-scenarios.md`), reference problem solutions (`evals/12-evaluation-suite.md`), and evaluation corpora (`evals/cases.json`, `evals/trigger_corpus.json`) must reside in `evals/` outside `triz-universal/` and must never be injected into the active problem-solving routing table in `SKILL.md` to prevent answer-key anchoring.
 4. **Bilingual Parity (EN / RU):** Any change to `SKILL.md` templates, triggers, or `README.md` must be reflected in the Russian equivalents (`README.ru.md`, Russian template in `SKILL.md`).
 
 ## Development & Verification Workflow

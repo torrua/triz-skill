@@ -61,12 +61,9 @@ triz-skill/
 ├── CONTRIBUTING.md                             # Contribution & evaluation guidelines
 ├── SECURITY.md                                 # Security policy & prompt-injection threat model
 ├── CITATION.cff                                # Academic & repository citation metadata
-├── .github/
-│   └── workflows/
-│       └── ci.yml                              # Cross-platform GitHub Actions CI & release zip builder
 ├── triz-universal/                             # Production skill package
 │   ├── SKILL.md                                # Tier-1 dispatcher (<300 lines)
-│   └── references/                             # Tier-2 reference modules
+│   └── references/                             # Tier-2 reference modules (13 modules)
 │       ├── README.md                           # Navigation index across all tiers
 │       ├── 01-ikr-ideality.md                  # IFR formulas, ideality calculus, zero-cost rules
 │       ├── 02-contradictions.md                # AC -> TC -> PC sharpening mechanics
@@ -77,9 +74,7 @@ triz-skill/
 │       ├── 07-resource-audit-vpr.md            # Substance-Field & latent resource discovery
 │       ├── 08-multi-domain-lenses.md           # Multi-domain lenses & OTSM-TRIZ ENV model
 │       ├── 09-su-field-and-standards.md        # Su-Field analysis & 76 Standard Solutions
-│       ├── 10-testing-scenarios.md             # 5 pressure verification benchmarks (offline regression)
 │       ├── 11-contradiction-matrix.md          # Curated non-deterministic 39-parameter lookup
-│       ├── 12-evaluation-suite.md              # 5 reference problems with scoring rubric (offline regression)
 │       ├── 13-perception-mapping.md            # Organizational & stakeholder contradiction mapping
 │       ├── SOURCES.md                          # Canonical bibliography with editions/pages & provenance
 │       ├── CLAIMS.md                           # Claim register & confidence levels
@@ -87,12 +82,15 @@ triz-skill/
 ├── evals/
 │   ├── cases.json                              # 20 structured evaluation cases (eliminate/limit/tradeoff/no-trigger)
 │   ├── trigger_corpus.json                     # 40 positive & negative bilingual trigger test prompts
+│   ├── 10-testing-scenarios.md                 # 5 pressure verification benchmarks (quarantined outside skill)
+│   ├── 12-evaluation-suite.md                  # 5 reference problems with scoring rubric (quarantined outside skill)
 │   ├── run_evals.py                            # Automated token budget, trigger, and rubric validator
 │   ├── BENCHMARK_REPORT.md                     # Published token, trigger, and baseline evaluation metrics
 │   └── README.md                               # Blinded evaluation & expert review protocol
 ├── scripts/
 │   ├── sync_deployment.py                      # Cross-platform installer, parity checker & zip packager
-│   └── sync-deployment.ps1                     # PowerShell deployment parity helper
+│   ├── sync-deployment.ps1                     # PowerShell deployment parity helper
+│   └── github-actions-ci.yml                   # Cross-platform GitHub Actions CI & release zip workflow
 ├── tests/
 │   └── test_triz_skill.py                      # Portable automated test suite
 └── docs/
