@@ -1,42 +1,50 @@
-# Behavioral & Trigger Evaluation Protocol
+# Behavioral, Trigger & Live-Model Evaluation Suite
 
-The structural unit tests in `tests/test_triz_skill.py` validate document structure, cross-links, version parity, and safety guardrails. This directory (`evals/`) provides the **behavioral, trigger, and token-budget evaluation suite** (`evals/cases.json`, `evals/trigger_corpus.json`, `evals/run_evals.py`, and [BENCHMARK_REPORT.md](BENCHMARK_REPORT.md)).
+The structural unit tests in `tests/test_triz_skill.py` validate document structure, cross-links, version parity, and safety guardrails. This directory (`evals/`) separates **offline regression self-tests** from the **paraphrase-tolerant blinded live-model evaluation harness**:
 
-## Quick Start: Automated Evaluation Runner
+- **`evals/live_eval.py` + `evals/judge_criteria.json` + `evals/judge_prompt.md`:** The live-model evaluation harness for real LLM outputs (`baseline` vs. `skill`), featuring 105 paraphrase-tolerant `must` / `avoid` criteria (`critical: true/false`), deterministic `hard_fail_patterns` and `anchors`, randomized blinded item generation (`judge_items.jsonl` + `judge_key.json`), verbatim quote verification, strict majority voting across multiple judges, Cohen's kappa inter-judge agreement, Wilson 95% confidence intervals, and exact two-sided McNemar/sign tests.
+- **`evals/run_evals.py` + `evals/cases.json` + `evals/trigger_corpus.json`:** Offline self-test of the reference corpus, context token budgets, and bilingual trigger routing rules (not evidence that live models improve).
 
-Run the automated evaluation and token-budget suite from the repository root:
+## 1. Quick Start: Offline Self-Test & Criteria Validation
+
+Run the offline self-test and criteria validator from the repository root:
 
 ```bash
 python evals/run_evals.py
+python evals/live_eval.py validate-criteria
 ```
 
 This verifies:
 1. **Context Token Budget:** Measures exact lines, bytes, and estimated tokens across Tier-1 (`SKILL.md`), Tier-2 (`references/*.md`), and Tier-3 (`references/ariz-deep/*.md`).
 2. **Trigger Precision & Recall (`evals/trigger_corpus.json`):** Tests 40 bilingual (EN/RU) positive and negative prompts (including DB deadlocks, CPU profiling bugs, meta-TRIZ mentions, and explicit compromise requests) across No-Trigger, Layer 1, and Layer 2 routing.
-3. **Multi-Outcome Rubric (`evals/cases.json`):** Evaluates 20 multi-domain cases across all four valid outcomes: `eliminate`, `prove-limit`, `managed-tradeoff`, and `no-trigger`.
+3. **Offline Reference-Corpus Self-Test (`evals/cases.json`):** Evaluates the 20 reference RED/GREEN pairs across all 5 outcome categories: `eliminate` (10), `prove-limit` (4), `conditional` (1), `managed-tradeoff` (1), and `no-trigger` (4).
+4. **Judge Criteria Validation (`evals/judge_criteria.json`):** Confirms all 20 cases define valid `must`/`avoid` criteria (at least one `critical` and one `avoid` per case) and valid regexes for `hard_fail_patterns` and `anchors`.
 
-## Running a Live Blinded Expert Evaluation Across Models
+## 2. Running a Blinded Live-Model Evaluation (`evals/live_eval.py`)
 
-To evaluate live LLM checkpoints (e.g., Claude Sonnet/Opus, Gemini Pro/Flash, GPT) with human domain reviewers:
+To evaluate real LLM checkpoints (e.g., Claude, Gemini, GPT) with zero substring bias and no silent fallbacks:
 
-1. Give each case prompt from `evals/cases.json` to the target model **with** and **without** `triz-universal`.
-2. Store raw outputs without exposing `expected_outcome`, `disallowed_claims`, or `required_evidence` to the model or evaluators.
-3. Randomize and blind the outputs (strip TRIZ headers or evaluate in Layer 1 default mode) before expert review.
-4. Have domain-qualified reviewers independently score constraint handling, factual support, feasibility, risk disclosure, and absence of over-engineering.
-5. Record disagreements, environment, model checkpoint, prompt version, token consumption, and tool access.
-
-## Passing Rubric
-
-An answer passes only when it:
-
-- preserves each hard constraint, proves the relevant irreducible limit (`prove-limit`), honors an authorized soft-constraint trade-off (`managed-tradeoff`), or bypasses TRIZ ceremony on routine non-contradiction bugs (`no-trigger`);
-- avoids every `disallowed_claim` in the case;
-- identifies assumptions and gives evidence/confidence (`Established`, `Pattern`, or `Hypothesis`);
-- supplies a measurable verification plan and residual risks;
-- is judged feasible by expert review for the relevant domain.
-
-Phrase matching is intentionally insufficient. A response that merely says “Physical Contradiction”, “VPR”, and “Separation” must fail if it makes an unsupported guarantee or over-engineers a routine bug.
+1. **Collect raw model outputs** (with and without `triz-universal`, across `run: 1..N`) into a JSON file `live.json`:
+   ```json
+   [
+     {"model": "model-name", "case_id": "distributed-inventory-consistency", "arm": "baseline", "run": 1, "output": "..."},
+     {"model": "model-name", "case_id": "distributed-inventory-consistency", "arm": "skill", "run": 1, "output": "..."}
+   ]
+   ```
+2. **Prepare blinded judge items** (strictly validates completeness unless `--allow-partial` is explicitly passed, runs deterministic pre-checks, and shuffles items with a cryptographic salt so judges cannot guess the arm or model):
+   ```bash
+   python evals/live_eval.py prepare --responses live.json --out evals/out
+   ```
+3. **Grade `evals/out/judge_items.jsonl`** using at least 2 independent judges (including human expert review for public claims) following `evals/judge_prompt.md`. Each judge outputs one JSON object per line:
+   ```json
+   {"item_id": "...", "verdicts": [{"criterion_id": "m1", "satisfied": true, "evidence": "\"verbatim quote from response\""}, ...]}
+   ```
+4. **Score and generate the statistical report** (verifies SHA-256 hashes of responses/criteria against `judge_key.json`, checks that quoted evidence actually appears in the response, combines judges by strict majority, and computes Wilson 95% CIs, exact two-sided McNemar/sign test $p$-values, skill regressions, and Cohen's kappa):
+   ```bash
+   python evals/live_eval.py score --responses live.json --key evals/out/judge_key.json \
+       --verdicts judgeA.jsonl --verdicts judgeB.jsonl --out evals/out/report.md
+   ```
 
 ## Published Results
 
-See [BENCHMARK_REPORT.md](BENCHMARK_REPORT.md) for current token budgets, trigger precision/recall, rubric scores, and documented failure modes.
+See [BENCHMARK_REPORT.md](BENCHMARK_REPORT.md) for current token budgets, trigger precision/recall, offline reference-corpus self-test results, live evaluation methodology, and documented failure modes.

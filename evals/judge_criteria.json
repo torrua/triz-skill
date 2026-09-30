@@ -1,0 +1,884 @@
+{
+  "schema_version": 1,
+  "criteria_version": "2026-09-30",
+  "notes": "All criteria are phrased so that satisfied=true is the good outcome (including 'avoid' criteria). A response passes when every critical criterion is satisfied.",
+  "cases": {
+    "distributed-inventory-consistency": {
+      "expected_outcome": "eliminate",
+      "criteria": [
+        {
+          "id": "m1",
+          "kind": "must",
+          "critical": true,
+          "weight": 1,
+          "text": "Separates the catalog read path from the inventory reservation path instead of applying one consistency level to both."
+        },
+        {
+          "id": "m2",
+          "kind": "must",
+          "critical": true,
+          "weight": 1,
+          "text": "The reservation/decrement decision is made on a linearizable or serializable authority (single writer, atomic conditional update, consensus-backed store), not on a cache or stale replica."
+        },
+        {
+          "id": "m3",
+          "kind": "must",
+          "critical": true,
+          "weight": 1,
+          "text": "States explicitly that catalog reads may be stale and bounds or characterizes the staleness (target lag, how it is measured)."
+        },
+        {
+          "id": "m4",
+          "kind": "must",
+          "critical": false,
+          "weight": 1,
+          "text": "Describes how partial failures are handled (reservation expiry/release, idempotency, recovery after a crash)."
+        },
+        {
+          "id": "a1",
+          "kind": "avoid",
+          "critical": true,
+          "weight": 1,
+          "text": "The response does NOT accept a risk of overselling (e.g., a short-TTL cache) as the solution."
+        },
+        {
+          "id": "a2",
+          "kind": "avoid",
+          "critical": true,
+          "weight": 1,
+          "text": "The response does NOT claim that async CDC or replication gives instantaneous or global consistency."
+        },
+        {
+          "id": "a3",
+          "kind": "avoid",
+          "critical": false,
+          "weight": 1,
+          "text": "The response does NOT present a read replica/cache as a free or 'not additional' component; added components and their costs are acknowledged."
+        }
+      ]
+    },
+    "regulated-onboarding": {
+      "expected_outcome": "conditional",
+      "criteria": [
+        {
+          "id": "m1",
+          "kind": "must",
+          "critical": true,
+          "weight": 1,
+          "text": "Treats KYC/AML obligations as a hard constraint that depends on jurisdiction and licence, and requires a jurisdiction-specific check before the design is final."
+        },
+        {
+          "id": "m2",
+          "kind": "must",
+          "critical": true,
+          "weight": 1,
+          "text": "If any deferral or reduction of identity verification is proposed, it is explicitly conditional on jurisdiction/regulator and legal review."
+        },
+        {
+          "id": "m3",
+          "kind": "must",
+          "critical": true,
+          "weight": 1,
+          "text": "Device, SIM, IP or other telemetry is treated as needing a lawful basis/consent and a privacy review, not as free by default."
+        },
+        {
+          "id": "m4",
+          "kind": "must",
+          "critical": false,
+          "weight": 1,
+          "text": "Proposes friction reductions that stay inside compliance (pre-fill, better document capture, progressive collection, asynchronous verification where permitted) and marks them conditional."
+        },
+        {
+          "id": "m5",
+          "kind": "must",
+          "critical": false,
+          "weight": 1,
+          "text": "States the missing inputs or assumptions (target jurisdictions, licence scope, funnel data)."
+        },
+        {
+          "id": "a1",
+          "kind": "avoid",
+          "critical": true,
+          "weight": 1,
+          "text": "The response does NOT claim that the design is compliant in all jurisdictions or gives a 100% compliance guarantee."
+        }
+      ]
+    },
+    "memory-latency-budget": {
+      "expected_outcome": "managed-tradeoff",
+      "criteria": [
+        {
+          "id": "m1",
+          "kind": "must",
+          "critical": true,
+          "weight": 1,
+          "text": "Recognizes that exact deduplication of the whole stream cannot fit in 16 MB (raw-key arithmetic or bits-per-key reasoning)."
+        },
+        {
+          "id": "m2",
+          "kind": "must",
+          "critical": true,
+          "weight": 1,
+          "text": "Uses a bounded approximate structure and/or a time window, with an error budget consistent with the authorized 0.01% false-positive rate."
+        },
+        {
+          "id": "m3",
+          "kind": "must",
+          "critical": true,
+          "weight": 1,
+          "text": "Identifies the deduplication window (or number of keys held) as the parameter that must be bounded or agreed, and shows or asks for the capacity of 16 MB at the target false-positive rate (order of millions of keys, minutes of traffic), or asks for the window."
+        },
+        {
+          "id": "m4",
+          "kind": "must",
+          "critical": true,
+          "weight": 1,
+          "text": "States the behaviour for false negatives (none inside the window; duplicates farther apart than the window are missed) and that this requires the owner's authorization."
+        },
+        {
+          "id": "m5",
+          "kind": "must",
+          "critical": false,
+          "weight": 1,
+          "text": "Names what must be measured: key distribution/cardinality, benchmark environment, p99 latency, observed false-positive rate."
+        },
+        {
+          "id": "a1",
+          "kind": "avoid",
+          "critical": true,
+          "weight": 1,
+          "text": "The response does NOT claim zero error for a probabilistic filter without proof."
+        },
+        {
+          "id": "a2",
+          "kind": "avoid",
+          "critical": true,
+          "weight": 1,
+          "text": "The response does NOT count OS page cache or memory-mapped data as consuming no memory against the 16 MB limit."
+        },
+        {
+          "id": "a3",
+          "kind": "avoid",
+          "critical": true,
+          "weight": 1,
+          "text": "The response does NOT claim that 100M distinct keys fit in 16 MB at 0.01% false positives without limiting the window."
+        }
+      ]
+    },
+    "cap-availability-consistency": {
+      "expected_outcome": "prove-limit",
+      "anchors": {
+        "cap": "cap\\b|gilbert|lynch|linearizab|partition|раздел"
+      },
+      "criteria": [
+        {
+          "id": "m1",
+          "kind": "must",
+          "critical": true,
+          "weight": 1,
+          "text": "States that linearizable writes and write availability on both sides of an active partition cannot both be guaranteed (CAP / Gilbert-Lynch), under the stated definitions."
+        },
+        {
+          "id": "m2",
+          "kind": "must",
+          "critical": true,
+          "weight": 1,
+          "text": "Says what is given up in practice: e.g., majority-side availability with the minority side rejecting writes, or an explicit relaxation of consistency."
+        },
+        {
+          "id": "m3",
+          "kind": "must",
+          "critical": false,
+          "weight": 1,
+          "text": "Marks the choice/relaxation as needing explicit authorization from the requirement owner instead of making it silently."
+        },
+        {
+          "id": "m4",
+          "kind": "must",
+          "critical": false,
+          "weight": 1,
+          "text": "Offers the best design inside the limit (quorum, leader leases, isolating non-invariant data, etc.) with its consequences."
+        },
+        {
+          "id": "a1",
+          "kind": "avoid",
+          "critical": true,
+          "weight": 1,
+          "text": "The response does NOT claim that a cache, retry queue or asynchronous replication removes the CAP limitation."
+        },
+        {
+          "id": "a2",
+          "kind": "avoid",
+          "critical": true,
+          "weight": 1,
+          "text": "The response does NOT treat eventual consistency as satisfying a linearizable write acknowledgement."
+        }
+      ]
+    },
+    "hft-telemetry-logging-ru": {
+      "expected_outcome": "eliminate",
+      "criteria": [
+        {
+          "id": "m1",
+          "kind": "must",
+          "critical": true,
+          "weight": 1,
+          "text": "Every state change is still logged (no sampling, no reduction of audit completeness)."
+        },
+        {
+          "id": "m2",
+          "kind": "must",
+          "critical": true,
+          "weight": 1,
+          "text": "Removes the disk write from the 5 µs hot path (in-memory lock-free/ring buffer or shared memory consumed by a separate thread/core) and gives an order-of-magnitude cost for the hot-path step or says it must be measured."
+        },
+        {
+          "id": "m3",
+          "kind": "must",
+          "critical": true,
+          "weight": 1,
+          "text": "Addresses durability: what is lost on a crash/power failure between capture and flush and how the regulator's requirement is still met (persistent memory, replication, journal, bounded and disclosed loss window), flagged for compliance confirmation."
+        },
+        {
+          "id": "m4",
+          "kind": "must",
+          "critical": false,
+          "weight": 1,
+          "text": "Covers buffer sizing and the overflow/backpressure policy, without silently dropping entries."
+        },
+        {
+          "id": "a1",
+          "kind": "avoid",
+          "critical": true,
+          "weight": 1,
+          "text": "The response does NOT propose logging only a sample (e.g., 1%) of transactions."
+        },
+        {
+          "id": "a2",
+          "kind": "avoid",
+          "critical": true,
+          "weight": 1,
+          "text": "The response does NOT claim that an asynchronous RAM buffer guarantees zero data loss on power failure without persistent hardware or replication."
+        }
+      ]
+    },
+    "ai-context-saturation": {
+      "expected_outcome": "eliminate",
+      "criteria": [
+        {
+          "id": "m1",
+          "kind": "must",
+          "critical": true,
+          "weight": 1,
+          "text": "Keeps a compact index in context and retrieves exact endpoint schemas on demand (tool call/retrieval) instead of loading or summarizing all 400."
+        },
+        {
+          "id": "m2",
+          "kind": "must",
+          "critical": true,
+          "weight": 1,
+          "text": "Exact schema text is taken verbatim from the source of truth for the endpoints used, so parameter names and types are not paraphrased."
+        },
+        {
+          "id": "m3",
+          "kind": "must",
+          "critical": true,
+          "weight": 1,
+          "text": "Accounts for the 3,000-token per-turn overhead limit (index size, cap on retrieved schemas per turn)."
+        },
+        {
+          "id": "m4",
+          "kind": "must",
+          "critical": false,
+          "weight": 1,
+          "text": "Names a failure mode (retrieval miss, wrong endpoint) and how it is detected, and says token/latency overhead should be measured."
+        },
+        {
+          "id": "a1",
+          "kind": "avoid",
+          "critical": true,
+          "weight": 1,
+          "text": "The response does NOT present lossy summarization as preserving exact field types."
+        },
+        {
+          "id": "a2",
+          "kind": "avoid",
+          "critical": true,
+          "weight": 1,
+          "text": "The response does NOT claim fine-tuning alone guarantees zero schema drift."
+        }
+      ]
+    },
+    "saas-custom-vs-multitenant-ru": {
+      "expected_outcome": "eliminate",
+      "criteria": [
+        {
+          "id": "m1",
+          "kind": "must",
+          "critical": true,
+          "weight": 1,
+          "text": "The core stays a single codebase with no per-customer forks or branches."
+        },
+        {
+          "id": "m2",
+          "kind": "must",
+          "critical": true,
+          "weight": 1,
+          "text": "Customer-specific tariff logic lives behind a defined extension boundary (plugin contract, rules engine/config, sandboxed module)."
+        },
+        {
+          "id": "m3",
+          "kind": "must",
+          "critical": true,
+          "weight": 1,
+          "text": "Addresses isolation and limits: tenant isolation, CPU/memory/time limits, no arbitrary customer code in the core process without a sandbox."
+        },
+        {
+          "id": "m4",
+          "kind": "must",
+          "critical": false,
+          "weight": 1,
+          "text": "Mentions versioning/testing of the extension contract and its latency or operational impact."
+        },
+        {
+          "id": "a1",
+          "kind": "avoid",
+          "critical": true,
+          "weight": 1,
+          "text": "The response does NOT add per-customer if/else branches to the core or recommend a fork."
+        },
+        {
+          "id": "a2",
+          "kind": "avoid",
+          "critical": true,
+          "weight": 1,
+          "text": "The response does NOT claim that running arbitrary customer code in the main process is safe without a sandbox."
+        }
+      ]
+    },
+    "aerodynamic-cooling-skin": {
+      "expected_outcome": "eliminate",
+      "criteria": [
+        {
+          "id": "m1",
+          "kind": "must",
+          "critical": true,
+          "weight": 1,
+          "text": "Proposes dissipating heat without protruding external fins (spreading heat into skin/structure, embedded channels, internal or flush ducting) and identifies where the heat finally goes (air, boundary layer, thermal storage)."
+        },
+        {
+          "id": "m2",
+          "kind": "must",
+          "critical": true,
+          "weight": 1,
+          "text": "Checks feasibility at the 2 kW scale (available skin area, temperature difference, heat-transfer coefficient, or thermal mass) or clearly flags the estimate as unverified; does not assume the skin can carry 2 kW."
+        },
+        {
+          "id": "m3",
+          "kind": "must",
+          "critical": false,
+          "weight": 1,
+          "text": "Notes dependence on flight regime (hover vs cruise airflow) and material temperature limits."
+        },
+        {
+          "id": "m4",
+          "kind": "must",
+          "critical": false,
+          "weight": 1,
+          "text": "Gives a validation step (CFD, wind tunnel, thermal test)."
+        },
+        {
+          "id": "a1",
+          "kind": "avoid",
+          "critical": true,
+          "weight": 1,
+          "text": "The response does NOT solve the conflict by throttling the electronics or reducing the 2 kW load."
+        },
+        {
+          "id": "a2",
+          "kind": "avoid",
+          "critical": true,
+          "weight": 1,
+          "text": "The response does NOT imply heat disappears without a sink."
+        }
+      ]
+    },
+    "amdahl-serial-bottleneck": {
+      "expected_outcome": "prove-limit",
+      "anchors": {
+        "limit_4x": "\\b4(?:[.,]0)?\\s*(?:x|×|раза|раз)\\b|1\\s*/\\s*0[.,]25",
+        "rel_baseline": "1[.,][67]\\d?\\s*(?:x|×|раза|раз)?"
+      },
+      "criteria": [
+        {
+          "id": "m1",
+          "kind": "must",
+          "critical": true,
+          "weight": 1,
+          "text": "Applies Amdahl's law with a 25% serial fraction: the speedup relative to a single core cannot exceed 4x, so 10x by adding cores is impossible with the algorithm fixed."
+        },
+        {
+          "id": "m2",
+          "kind": "must",
+          "critical": true,
+          "weight": 1,
+          "text": "Handles the baseline correctly: relative to the current 4-core deployment, 64 cores give only about 1.67x (ceiling about 1.75x); or states clearly which baseline every number uses and shows 10x is unreachable under either reading."
+        },
+        {
+          "id": "m3",
+          "kind": "must",
+          "critical": false,
+          "weight": 1,
+          "text": "Names what would change the limit (reduce the serial fraction, change the algorithm/pipeline) as requiring explicit authorization, optionally with the required serial fraction (about 8.6% for 10x over one core on 64 cores; about 1% for 10x over the current 4 cores)."
+        },
+        {
+          "id": "a1",
+          "kind": "avoid",
+          "critical": true,
+          "weight": 1,
+          "text": "The response does NOT claim that 10x is achievable by adding cores or tuning thread pools alone."
+        }
+      ]
+    },
+    "gdpr-right-to-erasure-immutable-ledger": {
+      "expected_outcome": "eliminate",
+      "criteria": [
+        {
+          "id": "m1",
+          "kind": "must",
+          "critical": true,
+          "weight": 1,
+          "text": "Separates the immutable integrity structure from erasable personal data (pointer/payload separation, per-user encryption keys) so the hash chain stays intact after erasure."
+        },
+        {
+          "id": "m2",
+          "kind": "must",
+          "critical": true,
+          "weight": 1,
+          "text": "After an erasure request the personal data is deleted or made unreadable, and the response considers whether remaining on-ledger values (e.g., hashes of low-entropy data) could still be personal data (salting/keyed hashing/no PII in the chain)."
+        },
+        {
+          "id": "m3",
+          "kind": "must",
+          "critical": true,
+          "weight": 1,
+          "text": "States that the approach needs legal/DPO review and is not automatically compliant."
+        },
+        {
+          "id": "m4",
+          "kind": "must",
+          "critical": false,
+          "weight": 1,
+          "text": "Covers backups, derived copies and key management."
+        },
+        {
+          "id": "a1",
+          "kind": "avoid",
+          "critical": true,
+          "weight": 1,
+          "text": "The response does NOT claim that storing plain PII on an immutable ledger is GDPR-compliant."
+        },
+        {
+          "id": "a2",
+          "kind": "avoid",
+          "critical": true,
+          "weight": 1,
+          "text": "The response does NOT propose rewriting the log and recomputing hashes as the solution."
+        }
+      ]
+    },
+    "sql-deadlock-stacktrace-debug": {
+      "expected_outcome": "no-trigger",
+      "hard_fail_patterns": [
+        "###\\s*💡",
+        "ТРИЗ-Изобретательское",
+        "TRIZ Inventive Resolution",
+        "Физическое противоречие \\(ФП\\)",
+        "Physical Contradiction:",
+        "Diagnostic Path",
+        "Ideal Final Result",
+        "идеальный конечный результат"
+      ],
+      "criteria": [
+        {
+          "id": "m1",
+          "kind": "must",
+          "critical": true,
+          "weight": 1,
+          "text": "Fixes the bug with a consistent lock order (always lock the lower account_id first, or lock both rows in one ordered statement)."
+        },
+        {
+          "id": "m2",
+          "kind": "must",
+          "critical": false,
+          "weight": 1,
+          "text": "Suggests a concurrent test in opposite directions or a retry on deadlock."
+        },
+        {
+          "id": "a1",
+          "kind": "avoid",
+          "critical": true,
+          "weight": 1,
+          "text": "The response does NOT frame the bug as an inventive contradiction or use TRIZ terminology/passport structure."
+        },
+        {
+          "id": "a2",
+          "kind": "avoid",
+          "critical": true,
+          "weight": 1,
+          "text": "The response does NOT propose an architectural redesign (event sourcing, striped counters) instead of the ordering fix."
+        }
+      ]
+    },
+    "meta-triz-question-ru": {
+      "expected_outcome": "no-trigger",
+      "hard_fail_patterns": [
+        "###\\s*💡",
+        "ТРИЗ-Изобретательское",
+        "TRIZ Inventive Resolution",
+        "Физическое противоречие \\(ФП\\)",
+        "Physical Contradiction:",
+        "Diagnostic Path"
+      ],
+      "criteria": [
+        {
+          "id": "m1",
+          "kind": "must",
+          "critical": true,
+          "weight": 1,
+          "text": "Briefly and correctly says what TRIZ is (theory of inventive problem solving, developed by Genrich Altshuller)."
+        },
+        {
+          "id": "m2",
+          "kind": "must",
+          "critical": true,
+          "weight": 1,
+          "text": "Gives 1956 as the year of the first publication by Altshuller and Shapiro."
+        },
+        {
+          "id": "a1",
+          "kind": "avoid",
+          "critical": true,
+          "weight": 1,
+          "text": "The response does NOT produce a TRIZ passport or apply the method to a problem."
+        }
+      ]
+    },
+    "explicit-user-compromise-request-ru": {
+      "expected_outcome": "no-trigger",
+      "hard_fail_patterns": [
+        "###\\s*💡",
+        "ТРИЗ-Изобретательское",
+        "TRIZ Inventive Resolution",
+        "Физическое противоречие \\(ФП\\)",
+        "Physical Contradiction:",
+        "Diagnostic Path"
+      ],
+      "criteria": [
+        {
+          "id": "m1",
+          "kind": "must",
+          "critical": true,
+          "weight": 1,
+          "text": "Gives a direct recommendation between 10 s and 60 s (or a clear conditional rule) tied to data freshness and read/write ratio."
+        },
+        {
+          "id": "m2",
+          "kind": "must",
+          "critical": false,
+          "weight": 1,
+          "text": "Keeps it simple for a weekend prototype (e.g., invalidate on own write) without redesign."
+        },
+        {
+          "id": "a1",
+          "kind": "avoid",
+          "critical": true,
+          "weight": 1,
+          "text": "The response does NOT refuse, lecture, or propose an architecture change (CDC, MVCC, etc.) against the user's explicit request."
+        },
+        {
+          "id": "a2",
+          "kind": "avoid",
+          "critical": true,
+          "weight": 1,
+          "text": "The response does NOT produce a TRIZ passport or contradiction analysis."
+        }
+      ]
+    },
+    "zero-downtime-schema-migration": {
+      "expected_outcome": "eliminate",
+      "criteria": [
+        {
+          "id": "m1",
+          "kind": "must",
+          "critical": true,
+          "weight": 1,
+          "text": "Uses expand-and-contract phases so old and new application versions both work at every step."
+        },
+        {
+          "id": "m2",
+          "kind": "must",
+          "critical": true,
+          "weight": 1,
+          "text": "Avoids long locks/table rewrites: adds columns without rewriting the table and backfills in throttled batches."
+        },
+        {
+          "id": "m3",
+          "kind": "must",
+          "critical": true,
+          "weight": 1,
+          "text": "Keeps data in sync during the transition (dual write in app or trigger) and switches reads only after the backfill is verified."
+        },
+        {
+          "id": "m4",
+          "kind": "must",
+          "critical": false,
+          "weight": 1,
+          "text": "Ensures rollback at each phase and drops the old column last; may mention that splitting names is ambiguous."
+        },
+        {
+          "id": "a1",
+          "kind": "avoid",
+          "critical": true,
+          "weight": 1,
+          "text": "The response does NOT rely on a maintenance window or downtime."
+        },
+        {
+          "id": "a2",
+          "kind": "avoid",
+          "critical": true,
+          "weight": 1,
+          "text": "The response does NOT run a direct RENAME/ALTER on the live table while old code is running."
+        }
+      ]
+    },
+    "serverless-cold-start-ml": {
+      "expected_outcome": "eliminate",
+      "criteria": [
+        {
+          "id": "m1",
+          "kind": "must",
+          "critical": true,
+          "weight": 1,
+          "text": "Takes model loading off the request critical path with snapshot restore/mmap/lazy paging and/or a pre-trigger on session start."
+        },
+        {
+          "id": "m2",
+          "kind": "must",
+          "critical": true,
+          "weight": 1,
+          "text": "Respects the no-24/7-idle-compute constraint (no always-on warm pool, or its cost is stated and explicitly authorized)."
+        },
+        {
+          "id": "m3",
+          "kind": "must",
+          "critical": true,
+          "weight": 1,
+          "text": "Says the sub-50 ms target holds only if restore or first-touch latency fits, calls for tail cold-start measurements, and gives a fallback for requests not preceded by a pre-trigger."
+        },
+        {
+          "id": "a1",
+          "kind": "avoid",
+          "critical": true,
+          "weight": 1,
+          "text": "The response does NOT claim a 2 GB download can complete in milliseconds without a snapshot/mmap technique."
+        },
+        {
+          "id": "a2",
+          "kind": "avoid",
+          "critical": true,
+          "weight": 1,
+          "text": "The response does NOT solve the conflict by keeping instances warm around the clock."
+        }
+      ]
+    },
+    "org-velocity-vs-security-review-ru": {
+      "expected_outcome": "eliminate",
+      "criteria": [
+        {
+          "id": "m1",
+          "kind": "must",
+          "critical": true,
+          "weight": 1,
+          "text": "Automates routine checks as policy-as-code gates in the pipeline so ordinary releases are not queued for 3 days."
+        },
+        {
+          "id": "m2",
+          "kind": "must",
+          "critical": true,
+          "weight": 1,
+          "text": "Routes to manual security review by risk criteria (auth, crypto, payments, permission changes) instead of reviewing every release."
+        },
+        {
+          "id": "m3",
+          "kind": "must",
+          "critical": true,
+          "weight": 1,
+          "text": "Keeps blocking gates for critical vulnerabilities; security checks are not cancelled."
+        },
+        {
+          "id": "m4",
+          "kind": "must",
+          "critical": false,
+          "weight": 1,
+          "text": "Acknowledges limits of automation (false positives/negatives) and proposes auditing gate effectiveness."
+        },
+        {
+          "id": "a1",
+          "kind": "avoid",
+          "critical": true,
+          "weight": 1,
+          "text": "The response does NOT propose abolishing security review for speed."
+        },
+        {
+          "id": "a2",
+          "kind": "avoid",
+          "critical": true,
+          "weight": 1,
+          "text": "The response does NOT claim static analysis finds all logic vulnerabilities."
+        }
+      ]
+    },
+    "thermodynamic-battery-energy-density": {
+      "expected_outcome": "prove-limit",
+      "criteria": [
+        {
+          "id": "m1",
+          "kind": "must",
+          "critical": true,
+          "weight": 1,
+          "text": "States that Li-ion energy density is on the order of 250-400 Wh/kg (less at pack level), so 5 kg stores roughly 1-2 kWh, a gap of tens of times to 50 kWh (10,000 Wh/kg)."
+        },
+        {
+          "id": "m2",
+          "kind": "must",
+          "critical": true,
+          "weight": 1,
+          "text": "States that BMS or software tuning cannot create the missing energy."
+        },
+        {
+          "id": "m3",
+          "kind": "must",
+          "critical": false,
+          "weight": 1,
+          "text": "Offers ways forward that change a constraint (mass, energy, chemistry, tether, fuel, swapping) and asks for authorization to change it."
+        },
+        {
+          "id": "a1",
+          "kind": "avoid",
+          "critical": true,
+          "weight": 1,
+          "text": "The response does NOT claim that BMS tuning or pulse discharge delivers 50 kWh from a 5 kg Li-ion pack."
+        }
+      ]
+    },
+    "shannon-lossless-random-compression": {
+      "expected_outcome": "prove-limit",
+      "criteria": [
+        {
+          "id": "m1",
+          "kind": "must",
+          "critical": true,
+          "weight": 1,
+          "text": "Explains via the counting/pigeonhole argument or entropy that no lossless compressor can shrink every input, and that random ciphertext is incompressible."
+        },
+        {
+          "id": "m2",
+          "kind": "must",
+          "critical": true,
+          "weight": 1,
+          "text": "States that guaranteeing 1 MB to 100 KB for every file is impossible."
+        },
+        {
+          "id": "m3",
+          "kind": "must",
+          "critical": false,
+          "weight": 1,
+          "text": "Offers alternatives (compress before encrypt, deduplication, changing the requirement) and preferably notes the security caveat of compress-then-encrypt."
+        },
+        {
+          "id": "a1",
+          "kind": "avoid",
+          "critical": true,
+          "weight": 1,
+          "text": "The response does NOT propose multi-pass or recursive compression as achieving the target on arbitrary ciphertext."
+        }
+      ]
+    },
+    "mobile-offline-sync-battery-ru": {
+      "expected_outcome": "eliminate",
+      "criteria": [
+        {
+          "id": "m1",
+          "kind": "must",
+          "critical": true,
+          "weight": 1,
+          "text": "Uses OS push or one multiplexed long-lived connection instead of frequent polling."
+        },
+        {
+          "id": "m2",
+          "kind": "must",
+          "critical": true,
+          "weight": 1,
+          "text": "Adds a reliability fallback (delta sync on wake/foreground/reconnect)."
+        },
+        {
+          "id": "m3",
+          "kind": "must",
+          "critical": true,
+          "weight": 1,
+          "text": "Varies behaviour by state (courier available vs off shift, screen state) to save battery."
+        },
+        {
+          "id": "m4",
+          "kind": "must",
+          "critical": false,
+          "weight": 1,
+          "text": "Acknowledges that push latency and delivery are not guaranteed by the OS (priority, doze) and states under which conditions the 1 s target is realistic."
+        },
+        {
+          "id": "a1",
+          "kind": "avoid",
+          "critical": true,
+          "weight": 1,
+          "text": "The response does NOT settle for periodic polling (e.g., every 30 s) as the answer."
+        },
+        {
+          "id": "a2",
+          "kind": "avoid",
+          "critical": true,
+          "weight": 1,
+          "text": "The response does NOT claim push delivery is 100% guaranteed."
+        }
+      ]
+    },
+    "simple-css-button-alignment": {
+      "expected_outcome": "no-trigger",
+      "hard_fail_patterns": [
+        "###\\s*💡",
+        "ТРИЗ-Изобретательское",
+        "TRIZ Inventive Resolution",
+        "Физическое противоречие \\(ФП\\)",
+        "Physical Contradiction:",
+        "Diagnostic Path",
+        "Separation in Space"
+      ],
+      "criteria": [
+        {
+          "id": "m1",
+          "kind": "must",
+          "critical": true,
+          "weight": 1,
+          "text": "Provides working CSS that centers the button horizontally and vertically (grid with place-items, or flex with justify-content/align-items), noting the card needs a height."
+        },
+        {
+          "id": "a1",
+          "kind": "avoid",
+          "critical": true,
+          "weight": 1,
+          "text": "The response does NOT use TRIZ terminology or passport structure."
+        }
+      ]
+    }
+  }
+}

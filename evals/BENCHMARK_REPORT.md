@@ -39,23 +39,26 @@ Evaluated across **40 bilingual (EN/RU) prompts** (20 positive contradiction/TRI
 
 ---
 
-## 3. Multi-Outcome Rubric Harness & Reference Corpus (`evals/cases.json`)
+## 3. Offline Reference-Corpus Self-Test (`evals/cases.json`) & Live-Model Evaluation Harness (`evals/live_eval.py`)
 
-> **Important Methodological Note (Reference Corpus vs. Live Model Runs):**
-> - By default (`python evals/run_evals.py`), the evaluator runs in **`reference_regression_corpus` mode**: it verifies that the deterministic scoring rubric (`disallowed_claims`, `required_evidence`, and `expected_outcome` validators) rejects 20 representative unconstrained RED failure baselines (`0/20`) and accepts 20 compliant GREEN reference resolutions (`20/20`) stored in `evals/cases.json`. This runs offline in CI with zero API keys or network dependencies.
-> - To score **live, unedited LLM outputs** from external API runs (e.g., Claude, Gemini, GPT), pass `--responses-file <path.json>` (`python evals/run_evals.py --responses-file live_runs.json`), where each entry maps `case_id` to `{"baseline_output": "...", "skill_output": "..."}`.
+> **Important Methodological Distinction (Offline Reference Self-Test vs. Live Blinded Model Evaluation):**
+> - **Offline Reference-Corpus Self-Test (`python evals/run_evals.py`):** Evaluates the 20 reference RED/GREEN pairs embedded in `evals/cases.json` against the deterministic offline check (`disallowed_claims`, `required_evidence`, and `expected_outcome` validators). This runs offline in CI with zero API keys to guard against regressions in the reference corpus, **not** as proof that live models improve.
+> - **Live Blinded Multi-Judge Evaluation (`python evals/live_eval.py`):** Replaces substring matching for real LLM outputs (`baseline` vs. `skill`) with **105 paraphrase-tolerant `must` / `avoid` criteria** in `evals/judge_criteria.json` and the blinded rubric in `evals/judge_prompt.md`:
+>   1. `prepare` strictly validates that all `(case_id, arm)` pairs exist (failing on missing entries unless `--allow-partial` is explicitly passed — never silently falling back to reference texts), runs deterministic `hard_fail_patterns` / `anchors`, and writes shuffled, cryptographically salted `judge_items.jsonl` + `judge_key.json`.
+>   2. `score` verifies SHA-256 integrity of `responses` and `judge_criteria.json`, checks that verbatim quoted `evidence` strings actually exist in the graded response, combines multiple judges by strict majority, and outputs **Wilson 95% confidence intervals**, **exact two-sided McNemar/sign test $p$-values**, **skill regressions**, and **Cohen's $\kappa$ inter-judge agreement**.
 
-The 20-case evaluation corpus spans 7 domains (`software`, `ai`, `fintech`, `business`, `hardware`, `organization`, `meta`) and 4 required outcome classes:
+The 20-case corpus spans 7 domains (`software`, `ai`, `fintech`, `business`, `hardware`, `organization`, `meta`) and 5 outcome classes:
 
-| Outcome Category | Cases | Reference RED Baseline Pass Rate | Reference GREEN Skill Pass Rate | Key Failure Mode Caught by Rubric |
+| Outcome Category | Cases | Reference RED Baseline Pass Rate | Reference GREEN Skill Pass Rate | Key Failure Mode Caught by Criteria |
 |---|---:|---:|---:|---|
 | **`eliminate`** (Contradiction Resolved) | 10 | 0 / 10 (0%) | **10 / 10 (100%)** | Prematurely sacrifices latency, durability, or security via naive middle-ground compromises |
-| **`prove-limit`** (Irreducible Physical/Math/Legal Bound) | 5 | 0 / 5 (0%) | **5 / 5 (100%)** | Hallucinates impossible speedups/compliance (violating CAP, Amdahl, Shannon, Li-ion chemistry, or KYC law) |
-| **`managed-tradeoff`** (User-Authorized Soft Target) | 2 | 0 / 2 (0%) | **2 / 2 (100%)** | Either claims a probabilistic filter has zero error or omits error-budget/staleness bounds |
-| **`no-trigger`** (Scope Guardrail / Ordinary Bug) | 3 | 0 / 3* | **3 / 3 (100%)** | Forces artificial TRIZ contradictions onto SQL lock-ordering bugs or CSS alignment |
-| **Total Across All Outcomes** | **20** | **0 / 20** | **20 / 20 (100%)** | — |
+| **`prove-limit`** (Irreducible Physical/Math Bound) | 4 | 0 / 4 (0%) | **4 / 4 (100%)** | Hallucinates impossible speedups/compression/energy (violating CAP, Amdahl's 1/s bound & 4-core baseline, Shannon entropy, or Li-ion energy density) |
+| **`conditional`** (Jurisdiction-Dependent Legal Bound) | 1 | 0 / 1 (0%) | **1 / 1 (100%)** | Assumes deferred KYC is universally permitted without a jurisdiction gate or treats device/SIM telemetry as free without privacy/consent review |
+| **`managed-tradeoff`** (User-Authorized Soft Target) | 1 | 0 / 1 (0%) | **1 / 1 (100%)** | Claims 100M keys fit in 16 MB at 0.01% FP (~19 bits/key holds only ~7–8M keys / ~4–5 min of traffic) without bounding the deduplication window |
+| **`no-trigger`** (Scope Guardrail / Ordinary Task) | 4 | 0 / 4* | **4 / 4 (100%)** | Forces artificial TRIZ passports onto SQL lock-ordering bugs, CSS centering, meta-TRIZ history questions, or explicit weekend-prototype TTL choices |
+| **Total Across All Outcomes** | **20** | **0 / 20** | **20 / 20 (100%)** | **105 paraphrase-tolerant criteria (`must` / `avoid`) validated** |
 
-*\*Note on `no-trigger` baseline scoring:* The rubric requires explicit verification evidence (e.g., `unit test for concurrent transfer` in `sql-deadlock-stacktrace-debug`) alongside avoiding unnecessary TRIZ ceremony.
+*\*Note on `no-trigger` reference RED scoring:* The reference RED baselines in `evals/cases.json` intentionally represent over-engineered TRIZ-jargon failures (which also trigger `hard_fail_patterns` in `evals/judge_criteria.json`).
 
 ---
 
@@ -65,12 +68,12 @@ Honest engineering requires documenting where forcing TRIZ is counterproductive:
 
 1. **Routine Bug Fixing & Lock-Ordering Deadlocks (`sql-deadlock-stacktrace-debug`):**
    - *How TRIZ hurts if misapplied:* If an agent treats a classic AB/BA mutex deadlock in application code as an "inventive contradiction" and proposes event-sourcing or striped counters instead of sorting lock acquisition order (`ORDER BY account_id`), it introduces massive accidental complexity.
-   - *Mitigation in v3.0.0:* Explicit negative triggers in `SKILL.md` frontmatter, pruned `metadata.triggers`, and Section 1 (`When NOT to Use This Skill`).
+   - *Mitigation in v3.0.0:* Explicit negative triggers in `SKILL.md` frontmatter, pruned `metadata.triggers`, Section 1 (`When NOT to Use This Skill`), and deterministic `hard_fail_patterns` in `evals/judge_criteria.json`.
 2. **Simple Prototypes & Explicit Compromise Requests (`explicit-user-compromise-request-ru`):**
    - *How TRIZ hurts if misapplied:* When a developer building a weekend prototype explicitly asks whether to use a 10s or 60s TTL cache, refusing to answer and lecturing them on CDC/MVCC wastes time and tokens.
-   - *Mitigation in v3.0.0:* `Step 0` pre-check, Outcome 3 (`managed-tradeoff` on soft constraints with explicit user authorization), and the `Fast-Path` rule.
-3. **Reasoning Latency & Token Overhead on Trivial Tasks:**
-   - Running the ARIZ-AI pipeline adds ~400–900 internal reasoning tokens and ~6.5k system prompt tokens. For straightforward CRUD or single-metric optimizations where no opposing constraint degrades, standard coding skills are faster and cheaper.
-4. **Automated Reference Rubric vs. Live Blind Human Expert Review:**
-   - The default run of `evals/run_evals.py` deterministically validates the scoring rubric against embedded reference RED/GREEN outputs.
-   - Evaluating stochastic live model behavior across new model checkpoints requires running live generations through `--responses-file` and conducting the blinded multi-reviewer protocol described in [evals/README.md](README.md).
+   - *Mitigation in v3.0.0:* Classified as `no-trigger` in both `evals/cases.json` and `evals/judge_criteria.json` (with `hard_fail_patterns` rejecting any TRIZ passport output).
+3. **Jurisdiction-Dependent Regulatory Problems (`regulated-onboarding`):**
+   - *How TRIZ hurts if misapplied:* Treating "defer KYC until withdrawal" as a universal Separation-in-Time triumph violates AML/CDD regimes that require identity verification before establishing a customer relationship, and treating device/SIM signals as "free VPR" ignores GDPR/ePrivacy consent rules.
+   - *Mitigation in v3.0.0:* Classified as `conditional` outcome requiring a mandatory jurisdiction gate, legal sign-off on the state machine, and privacy review for telemetry.
+4. **Reasoning Latency & Token Overhead on Trivial Tasks:**
+   - Running the ARIZ-AI pipeline adds ~400–900 internal reasoning tokens and ~6.6k system prompt tokens. For straightforward CRUD or single-metric optimizations where no opposing constraint degrades, standard coding skills are faster and cheaper.

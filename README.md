@@ -162,18 +162,21 @@ cp -r triz-universal/ ~/.claude/skills/triz-universal/
 ### Known Limitations
 1. **Token & Latency Overhead:** Loading `SKILL.md` adds ~6.5k tokens to the system context, and running the ARIZ-AI loop adds ~400–900 reasoning tokens.
 2. **Not a Substitute for Empirical or Legal Validation:** An LLM cannot measure latency, prove hardware thermal limits, or grant GDPR/KYC regulatory approval. All outputs default to `Status: UNVERIFIED` until validated by domain engineers or legal counsel.
-3. **Stochastic Model Compliance:** While `evals/run_evals.py` verifies trigger rules and reference outputs (and supports `--responses-file` for live API outputs), live model behavior depends on the underlying LLM's reasoning capability. See [evals/BENCHMARK_REPORT.md](evals/BENCHMARK_REPORT.md).
+3. **Stochastic Model Compliance:** While `evals/run_evals.py` runs an offline self-test of the reference corpus and routing rules, evaluating live LLM checkpoints (`baseline` vs. `skill`) uses `evals/live_eval.py` + `evals/judge_criteria.json` (105 paraphrase-tolerant criteria, blinded multi-judge scoring, Wilson 95% CIs, and exact McNemar sign tests). See [evals/README.md](evals/README.md) and [evals/BENCHMARK_REPORT.md](evals/BENCHMARK_REPORT.md).
 
 ## Testing & Evaluation
 
-Run the portable test suite and the evaluation runner (requires only Python 3.10+ standard library):
+Run the portable test suite, offline self-test, and live-eval criteria validator (requires only Python 3.10+ standard library):
 
 ```bash
-# 1. Run structural, version-parity, security, and regression tests
+# 1. Run structural, version-parity, security, and live-eval workflow unit tests
 python tests/test_triz_skill.py
 
-# 2. Run token budget, 40-prompt trigger accuracy, and 20-case rubric evaluations
+# 2. Run token budget, 40-prompt trigger accuracy, and 20-case offline self-tests
 python evals/run_evals.py
+
+# 3. Validate the 105 paraphrase-tolerant live-eval judge criteria
+python evals/live_eval.py validate-criteria
 ```
 
 > **Note on Active Deployment Tests (`TRIZ_DEPLOY_DIR`):** `tests/test_triz_skill.py` includes 3 deployment-parity tests in `TestActiveDeployment` that compare the repository source against an installed copy via SHA-256. When running source tests without `TRIZ_DEPLOY_DIR` set, those 3 tests are skipped by design. Set `TRIZ_DEPLOY_DIR` (as CI does automatically) to run all tests with 0 skipped:
@@ -186,11 +189,11 @@ python evals/run_evals.py
 See [CHANGELOG.md](CHANGELOG.md) for the full release history (`v1.0.0` → `v3.0.0`).
 
 ### v3.0.0 (Current Release)
-- ✅ **Dual-Loop Progressive Disclosure:** Layer 1 Plain-Language Core (covering all 3 valid outcomes: contradiction eliminated, proven limit, or authorized soft trade-off) + Layer 2 Professional TRIZ Passport
+- ✅ **Dual-Loop Progressive Disclosure:** Layer 1 Plain-Language Core (covering all valid outcomes: contradiction eliminated, proven/conditional limit, or authorized soft trade-off) + Layer 2 Professional TRIZ Passport
 - ✅ **Hardened Guardrails & Escape Valve:** Bilingual positive/negative triggers in `description`, `When NOT to Use` scope filter, 3-pass Escape Valve distinguishing physical laws, mathematical bounds (CAP, Amdahl, Shannon), and legal/budgetary limits
 - ✅ **Canonical Sources & Claims:** Exact editions and page ranges in `SOURCES.md`, clean-room notice, and 10 formal claims in `CLAIMS.md`
-- ✅ **Evaluation & Trigger Benchmark Suite:** 20 multi-domain cases (`evals/cases.json`), 40 bilingual trigger prompts (`evals/trigger_corpus.json`), automated runner (`evals/run_evals.py`), and [Benchmark Report](evals/BENCHMARK_REPORT.md)
-- ✅ **Cross-Platform CI & Packaging:** GitHub Actions CI across Linux/Windows/macOS, `scripts/sync_deployment.py`, `CONTRIBUTING.md`, `SECURITY.md`, and `CITATION.cff`
+- ✅ **Live-Eval Multi-Judge Harness & Trigger Suite:** 20 multi-domain cases (`evals/cases.json`), 105 paraphrase-tolerant criteria (`evals/judge_criteria.json`), blinded multi-judge evaluator (`evals/live_eval.py` + `evals/judge_prompt.md`), 40 bilingual trigger prompts (`evals/trigger_corpus.json`), offline self-test (`evals/run_evals.py`), and [Benchmark Report](evals/BENCHMARK_REPORT.md)
+- ✅ **Cross-Platform CI & Packaging:** CI template (`scripts/github-actions-ci.yml`), `scripts/sync_deployment.py`, `CONTRIBUTING.md`, `SECURITY.md`, and `CITATION.cff`
 
 ## Acknowledgments
 

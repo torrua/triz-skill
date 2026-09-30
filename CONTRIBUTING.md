@@ -19,18 +19,22 @@ Before opening a Pull Request, run the full verification suite (requires only Py
 # 1. Run unit and structural integrity tests
 python tests/test_triz_skill.py
 
-# 2. Run token budget, trigger accuracy, and evaluation corpus checks
+# 2. Run offline token budget, trigger accuracy, and reference corpus self-tests
 python evals/run_evals.py
 
-# 3. Test cross-platform deployment parity and release packaging
+# 3. Validate paraphrase-tolerant live-eval judge criteria
+python evals/live_eval.py validate-criteria
+
+# 4. Test cross-platform deployment parity and release packaging
 python scripts/sync_deployment.py --package-zip
 ```
 
 ## Adding New Evaluation Cases
 
 When adding cases to `evals/cases.json`:
-- Specify `id`, `domain`, `language` (`en` or `ru`), `prompt`, `hard_constraints`, `disallowed_claims`, `expected_outcome` (`eliminate`, `prove-limit`, `managed-tradeoff`, or `no-trigger`), and `required_evidence`.
-- Ensure `python evals/run_evals.py` and `python tests/test_triz_skill.py` pass.
+- Specify `id`, `domain`, `language` (`en` or `ru`), `prompt`, `hard_constraints`, `disallowed_claims`, `expected_outcome` (`eliminate`, `prove-limit`, `managed-tradeoff`, `conditional`, or `no-trigger`), and `required_evidence`.
+- Add matching paraphrase-tolerant `must` / `avoid` criteria (`critical: true/false`) to `evals/judge_criteria.json`.
+- Ensure `python evals/live_eval.py validate-criteria`, `python evals/run_evals.py`, and `python tests/test_triz_skill.py` pass.
 
 ## License
 

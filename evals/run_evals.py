@@ -1,9 +1,14 @@
 #!/usr/bin/env python3
 """
-Automated Evaluation Runner for triz-universal:
+Automated Offline Self-Test Runner for triz-universal:
 1. Context Token Budget Analyzer (Tier-1, Tier-2, Tier-3)
 2. Bilingual Trigger Precision / Recall Evaluator (40 prompts in evals/trigger_corpus.json)
-3. Multi-Outcome Rubric Evaluator (20 cases in evals/cases.json: eliminate, prove-limit, managed-tradeoff, no-trigger)
+3. Offline Reference-Corpus Self-Test (20 cases in evals/cases.json: eliminate, prove-limit, managed-tradeoff, conditional, no-trigger)
+4. Paraphrase-Tolerant Judge Criteria Validator (evals/judge_criteria.json via evals/live_eval.py)
+
+Note: This script is an offline self-test of the reference corpus and routing rules.
+For blinded live-model evaluation with multi-judge scoring, Cohen's kappa, Wilson 95% CIs,
+and exact two-sided McNemar/sign tests, use `python evals/live_eval.py`.
 """
 
 from __future__ import annotations
@@ -191,6 +196,8 @@ def score_case_response(case: dict, response_text: str) -> dict:
     outcome_valid = True
     if outcome == "prove-limit":
         outcome_valid = bool(re.search(r"irreducible|limit|impossible|bound", response_text, re.I))
+    elif outcome == "conditional":
+        outcome_valid = bool(re.search(r"conditional|depends\s+on\s+jurisdiction|jurisdiction\s+gate", response_text, re.I))
     elif outcome == "eliminate":
         outcome_valid = not bool(re.search(r"\b(?:reasonable\s+compromise|balance\s+between|пойти\s+на\s+компромисс|найдём\s+баланс)\b", response_text, re.I))
 
@@ -204,21 +211,13 @@ def score_case_response(case: dict, response_text: str) -> dict:
     }
 
 
-def evaluate_cases_corpus(external_responses_path: Path | None = None) -> dict:
+def evaluate_cases_corpus() -> dict:
     """
-    Run rubric evaluation across all 20 cases in evals/cases.json.
-    By default evaluates the reference RED/GREEN outputs embedded in evals/cases.json
-    (deterministic offline regression mode). If --responses-file is passed, evaluates
-    external model outputs keyed by case id.
+    Run offline self-test across all 20 reference cases in evals/cases.json.
+    Evaluates the reference RED/GREEN outputs embedded in evals/cases.json.
+    For live model outputs, use `evals/live_eval.py` (no silent fallbacks).
     """
     cases = json.loads(CASES_FILE.read_text(encoding="utf-8"))
-    external_map = {}
-    if external_responses_path is not None:
-        raw_ext = json.loads(external_responses_path.read_text(encoding="utf-8"))
-        if isinstance(raw_ext, list):
-            external_map = {item["id"]: item for item in raw_ext}
-        elif isinstance(raw_ext, dict):
-            external_map = raw_ext
 
     red_passes = 0
     green_passes = 0
@@ -230,9 +229,8 @@ def evaluate_cases_corpus(external_responses_path: Path | None = None) -> dict:
         by_outcome.setdefault(outcome, {"total": 0, "red_pass": 0, "green_pass": 0})
         by_outcome[outcome]["total"] += 1
 
-        ext_entry = external_map.get(case["id"], {})
-        red_text = ext_entry.get("baseline_output", case["baseline_red_output"])
-        green_text = ext_entry.get("skill_output", case["skill_green_output"])
+        red_text = case["baseline_red_output"]
+        green_text = case["skill_green_output"]
 
         red_score = score_case_response(case, red_text)
         green_score = score_case_response(case, green_text)
@@ -247,7 +245,7 @@ def evaluate_cases_corpus(external_responses_path: Path | None = None) -> dict:
             failures.append((case["id"], green_score))
 
     return {
-        "mode": "external_live_outputs" if external_responses_path else "reference_regression_corpus",
+        "mode": "reference_regression_corpus",
         "total_cases": len(cases),
         "red_passes": red_passes,
         "green_passes": green_passes,
@@ -257,23 +255,16 @@ def evaluate_cases_corpus(external_responses_path: Path | None = None) -> dict:
 
 
 def main() -> int:
-    import argparse
+    import live_eval
 
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
-    parser = argparse.ArgumentParser(description="Run triz-universal token budget, trigger, and rubric evaluations.")
-    parser.add_argument(
-        "--responses-file",
-        type=Path,
-        default=None,
-        help="Optional path to JSON file containing external live model outputs keyed by case id.",
-    )
-    args = parser.parse_args()
-
     budgets = measure_token_budgets()
     triggers = evaluate_trigger_corpus()
-    cases_eval = evaluate_cases_corpus(args.responses_file)
+    cases_eval = evaluate_cases_corpus()
+    live_cases = live_eval.load_cases()
+    live_criteria = live_eval.load_criteria(live_eval.DEFAULT_CRITERIA, set(live_cases))
 
     tier2_lines = sum(f["lines"] for f in budgets["tier2_files"])
     tier2_bytes = sum(f["bytes"] for f in budgets["tier2_files"])
@@ -310,7 +301,7 @@ def main() -> int:
         f"Layer Routing Accuracy: {triggers['layer_accuracy']*100:.1f}%"
     )
 
-    print(f"\n=== 3. Behavioral Rubric Evaluation (20 Cases, mode={cases_eval['mode']}) ===")
+    print(f"\n=== 3. Offline Reference-Corpus Self-Test (20 Cases, mode={cases_eval['mode']}) ===")
     print(
         f"Total Cases: {cases_eval['total_cases']} | "
         f"Baseline (RED) Pass Rate: {cases_eval['red_passes']}/{cases_eval['total_cases']} | "
@@ -322,6 +313,10 @@ def main() -> int:
             f"baseline_pass={stats['red_pass']}/{stats['total']}, "
             f"skill_pass={stats['green_pass']}/{stats['total']}"
         )
+
+    total_criteria = sum(len(v["criteria"]) for v in live_criteria.values())
+    print(f"\n=== 4. Live-Eval Judge Criteria Validation ===")
+    print(f"Validated {len(live_criteria)} cases ({total_criteria} paraphrase-tolerant must/avoid criteria) in evals/judge_criteria.json")
 
     if budgets["tier1"]["lines"] >= 300:
         print(f"FAIL: SKILL.md exceeds 300 lines ({budgets['tier1']['lines']})", file=sys.stderr)

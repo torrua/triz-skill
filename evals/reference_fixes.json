@@ -1,0 +1,17 @@
+{
+  "memory-latency-budget": {
+    "prompt": "Meet a 16 MB process-memory limit and sub-millisecond deduplication latency for a 100M-event/hour stream (about 28k events/s) of 64-bit event IDs. The product owner authorizes a 0.01% false-positive rate and requires no false negatives inside the deduplication window. The length of the window has not been decided yet.",
+    "expected_outcome": "managed-tradeoff",
+    "skill_green_output": "Exact deduplication of the whole stream cannot fit in 16 MB: 100M 64-bit IDs are about 800 MB per hour. With the authorized 0.01% false-positive rate a Bloom filter needs about 19 bits per key (a cuckoo filter about 17), so 16 MB holds only 7-8 million keys, roughly 4-5 minutes of traffic at 28k events/s. The parameter being traded is therefore the deduplication window, not the accuracy alone. Use rotating time-window generations of the filter (size them so the combined false-positive rate across generations stays within the error budget): no false negatives inside the window, while duplicates farther apart than the window are not detected. That needs the product owner's explicit authorization; a longer window requires a larger memory limit or a different error budget. Assumptions and verification: measure the real data distribution and key cardinality, run a benchmark environment test for p99 < 1 ms, and confirm the observed false-positive rate against the error budget. Status: UNVERIFIED."
+  },
+  "amdahl-serial-bottleneck": {
+    "skill_green_output": "Irreducible mathematical limit under the stated assumptions (Amdahl bound calculation, serial fraction assumption s = 0.25): relative to a single core the speedup can never exceed 1/s = 4x, and 64 cores give about 3.8x. Relative to the current 4-core deployment (about 2.3x over one core) moving to 64 cores gives only about 1.67x, with a ceiling of about 1.75x. So 10x is impossible under either baseline while the algorithm and input model are fixed. To reach it you must authorize a bypass via algorithm or pipeline change that lowers the serial fraction: about 8.6% or less for 10x over one core on 64 cores, and about 1% or less for 10x over the current 4-core deployment. Status: ESTABLISHED (mathematical bound)."
+  },
+  "regulated-onboarding": {
+    "expected_outcome": "conditional",
+    "skill_green_output": "Conditional answer: the hard limit depends on jurisdiction, so begin with a jurisdiction gate. KYC/AML customer due diligence differs by country and licence type; some regimes allow identity verification to finish after account opening but before funding or transfers, others require it before any relationship starts, so do not assume deferral is allowed everywhere. Inside the compliant envelope, reduce abandonment with pre-filled data, one-step document capture with clear progress, asynchronous verification where the regulator permits it, and an approved state machine (for example browse, verified, funded) whose transitions legal has signed off. Device, SIM or IP signals need a lawful basis, consent where required and a privacy review before use; they are not free by default. Inputs needed: target jurisdictions, licence scope and current drop-off by step. Status: UNVERIFIED, requires counsel sign-off."
+  },
+  "explicit-user-compromise-request-ru": {
+    "expected_outcome": "no-trigger"
+  }
+}

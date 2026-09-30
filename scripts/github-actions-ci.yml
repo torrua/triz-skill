@@ -42,7 +42,9 @@ jobs:
           TRIZ_DEPLOY_DIR="$DEPLOY_TMP" python tests/test_triz_skill.py
 
       - name: Run Trigger, Rubric & Token Budget Evaluation Suite
-        run: python evals/run_evals.py
+        run: |
+          python evals/run_evals.py
+          python evals/live_eval.py validate-criteria
 
       - name: Build Release Archive (triz-universal.zip)
         run: python scripts/sync_deployment.py --package-zip
